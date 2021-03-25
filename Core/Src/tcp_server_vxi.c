@@ -121,11 +121,13 @@ static err_t tcp_vxi_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
   // allocate structure srv to maintain tcp connection informations
   srv = (struct tcp_vxiserver_struct *)mem_malloc(sizeof(struct tcp_vxiserver_struct));
   scpi_server = srv;
+  scpi_tpcb = newpcb;
   if (srv != NULL){
     srv->state = VXI_ACCEPTED;
     srv->pcb = newpcb;
     srv->retries = 0;
     srv->bufrx = NULL;
+    srv->buftx = NULL;
     // pass newly allocated srv structure as argument to newpcb
     tcp_arg(newpcb, srv);
     // initialize lwip tcp_recv callback function for newpcb 
@@ -142,7 +144,6 @@ static err_t tcp_vxi_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
   }
   return ret_err;
 }
-
 
 /**
   * @brief  This function is the implementation for tcp_recv LwIP callback
@@ -233,6 +234,7 @@ static void tcp_vxi_error(void *arg, err_t err)
   struct tcp_vxiserver_struct *srv;
   LWIP_UNUSED_ARG(err);
   scpi_server = NULL;
+  scpi_tpcb = NULL;
   srv = (struct tcp_vxiserver_struct *)arg;
   if (srv != NULL){
     mem_free(srv);  //  free srv structure
@@ -296,7 +298,6 @@ static err_t tcp_vxi_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
   return ERR_OK;
 }
 
-
 /**
   * @brief  This function is used to send data for tcp connection
   * @param  tpcb: pointer on the tcp_pcb connection
@@ -324,9 +325,9 @@ static void tcp_vxi_send(struct tcp_pcb *tpcb, struct tcp_vxiserver_struct *srv)
       if(srv->buftx != NULL){
         pbuf_ref(srv->buftx);  // increment reference count for srv->p
       }
-      do{ // chop first pbuf from chain
-        freed = pbuf_free(ptr); // try hard to free pbuf
-      }while(freed == 0);
+	  do{ // chop first pbuf from chain
+		  freed = pbuf_free(ptr); // try hard to free pbuf
+	  }while(freed == 0);
      tcp_recved(tpcb, plen);    // we can read more data now
    }
    else if(wr_err == ERR_MEM){
@@ -358,36 +359,47 @@ static void tcp_vxi_connection_close(struct tcp_pcb *tpcb, struct tcp_vxiserver_
     mem_free(srv);   // delete srv structure
   }
   tcp_close(tpcb);
+  scpi_server = NULL;
+  scpi_tpcb = NULL;
 }
 
 
 
 
-
-
-
-
+// https://lwip.fandom.com/wiki/Raw/TCP#Sending_TCP_data
 size_t SCPI_Write_TCP(scpi_t * context, const char * data, size_t len){
 	(void) context;
 	struct pbuf *msg;
 	// allocate structure srv to maintain tcp connection informations
-
 	/*
-	msg = (struct pbuf *)mem_malloc(sizeof(struct pbuf) + len*sizeof(char));
-	memcpy(msg->payload, data, len);
+	msg = (struct pbuf*)mem_malloc(sizeof(struct pbuf));
+	msg->payload = data;
 	msg->len = len;
-	scpi_server->buftx = msg;
 
 	if(scpi_server->buftx == NULL){
 		scpi_server->buftx = msg;
 	} else {
 		struct pbuf *ptr;
-		ptr = scpi_server->buftx; // chain pbufs to the end of what we recv'ed previously
-		pbuf_chain(ptr, msg);
-		// pbuf_chain(scpi_server->buftx, msg);
+		ptr = scpi_server->buftx; // chain pbufs to the end of what is still in the tx chain
+		pbuf_chain(ptr,msg);
+	}*/
+
+	tcp_sent(scpi_server->pcb, tcp_vxi_sent);
+	// tcp_vxi_send(scpi_server->pcb, scpi_server);
+	err_t wr_err = ERR_OK;
+	while ((wr_err == ERR_OK) && (len <= tcp_sndbuf(scpi_tpcb)))
+	{
+		// enqueue data for transmission
+		wr_err = tcp_write(scpi_tpcb, data, len, 1);
+		if (wr_err == ERR_OK){
+			return len;
+		}else if(wr_err == ERR_MEM){
+			// we are low on memory, try later / harder, defer to poll
+
+		}else{
+			// other problem ??
+		}
 	}
-	tcp_vxi_send(scpi_server->pcb, scpi_server);
-	*/
 	return fwrite(data, 1, len, stdout);
 }
 
