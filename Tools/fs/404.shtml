@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>404 Error</title>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/png" href="img/icon100.png">
+</head>
+<body>
+    <h3>httpd server Error 404</h3>
+    <p>The page could not be found</p>
+</body>
+</html>

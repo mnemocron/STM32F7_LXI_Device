@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>eta Systems SwitchBox</title>
+	<meta charset="utf-8" />
+	<link rel="icon" type="image/png" href="img/icon100.png">
+<style>
+body {
+	background-color: #dbdbdb;
+	font-family: Arial,Helvetica;
+}
+.header img {
+  float: left;
+  width: 3em;
+  height: 3em;
+}
+.header h1 {
+  position: relative;
+  top: 18px;
+  left: 10px;
+}
+.header a {
+	text-decoration: none;
+}
+.content {
+	width: 100%;
+}
+</style>
+</head>
+<body>
+	<div class="header">
+		<img src="img/icon100.png" alt="logo" />
+		<h3><a href="https://eta-systems.ch">eta Systems </a> SwitchBox</h3>
+		<br>
+		<br>
+		<p></p>
+	</div>
+	<div class="content">
+		<form method="get" action="/leds.cgi">
+		<form method="get" action="/leds.cgi">
+		<!--#tag1-->LED1 (red)
+		<br>
+		<!--#tag2-->LED2 (blue)
+		<br>
+		<input value="OK" type="submit">
+	</form>	
+	</div>
+</body>
+</html>
+
+
