@@ -26,6 +26,8 @@
 /* USER CODE BEGIN Includes */
 #include "tcp_echoserver.h"
 #include "tcp_server_vxi.h"
+#include "tcp_server_hislip.h"
+#include "tcp_server_scpi_raw.h"
 #include "scpi/scpi.h"          // SCPI Library
 #include "scpi-def.h"           // SCPI User Code
 #include "lwrb/lwrb.h"
@@ -121,7 +123,9 @@ int main(void)
 	mySSIinit();
 
 	tcp_echoserver_init();  // echo Server on Port 23 (Telnet)
-	tcp_server_vxi_init();  // LXI / VXI11 Server on Port 5025
+	tcp_server_vxi_init();  // LXI / VXI11 Server on Port 111
+	tcp_server_hislip_init();  // LXI / VXI11 Server on Port 4880
+	tcp_server_scpiraw_init();  // LXI / VXI11 Server on Port 5025
 
 	uint8_t ipAddressPrinted = FALSE;
 	printf("SwitchBox\n");

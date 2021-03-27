@@ -42,6 +42,13 @@
 
 #define SCPI_INPUT_BUFFER_LENGTH 256
 #define SCPI_ERROR_QUEUE_SIZE 17
+
+/**
+ * IDN1 : Manufacturer (e.g. Keysight Technologies)
+ * IDN2 : Model (e.g. 34465A)
+ * IDN3 : Serial Number (e.g. BM420a2018)
+ * IDN4 : Firmware Version (e.g. A.02.14-02.40-02.14-00.49-02-01)
+ */
 #define SCPI_IDN1 "ACME INC."
 #define SCPI_IDN2 "VXI11 DEVICE 9000"
 #define SCPI_IDN3 "V1.0.0"

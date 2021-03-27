@@ -35,7 +35,7 @@
  // This file was modified by ST
  // This file way modified by Simon Burkhardt
 
-#include "tcp_server_vxi.h"
+#include "tcp_server_scpi_raw.h"
 #include "lwip/debug.h"
 #include "lwip/stats.h"
 #include "lwip/tcp.h"
@@ -47,56 +47,56 @@
 
 extern scpi_t scpi_context_tcp;
 
-static struct tcp_pcb *tcp_vxiserver_pcb;
-struct tcp_vxiserver_struct *scpi_server;
-struct tcp_pcb *scpi_tpcb;
+static struct tcp_pcb *tcp_scpirawserver_pcb;
+extern struct tcp_scpirawserver_struct *scpi_server;
+extern struct tcp_pcb *scpi_tpcb;
 
 // ECHO protocol states
-enum tcp_vxiserver_states
+enum tcp_scpirawserver_states
 {
-  VXI_NONE = 0,
-  VXI_ACCEPTED,
-  VXI_RECEIVED,
-  VXI_CLOSING
+  scpiraw_NONE = 0,
+  scpiraw_ACCEPTED,
+  scpiraw_RECEIVED,
+  scpiraw_CLOSING
 };
 
 // structure for maintaing connection infos to be passed as argument to LwIP callbacks
-struct tcp_vxiserver_struct
+struct tcp_scpirawserver_struct
 {
   u8_t state;             // current connection state
   u8_t retries;
   struct tcp_pcb *pcb;    // pointer on the current tcp_pcb
 };
 
-static err_t tcp_vxi_accept(void *arg, struct tcp_pcb *newpcb, err_t err);
-static err_t tcp_vxi_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *bufrx, err_t err);
-static void tcp_vxi_error(void *arg, err_t err);
-static err_t tcp_vxi_poll(void *arg, struct tcp_pcb *tpcb);
-static err_t tcp_vxi_sent(void *arg, struct tcp_pcb *tpcb, u16_t len);
-static void tcp_vxi_send(struct tcp_pcb *tpcb, struct tcp_vxiserver_struct *srv);
-static void tcp_vxi_connection_close(struct tcp_pcb *tpcb, struct tcp_vxiserver_struct *srv);
+static err_t tcp_scpiraw_accept(void *arg, struct tcp_pcb *newpcb, err_t err);
+static err_t tcp_scpiraw_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *bufrx, err_t err);
+static void tcp_scpiraw_error(void *arg, err_t err);
+static err_t tcp_scpiraw_poll(void *arg, struct tcp_pcb *tpcb);
+static err_t tcp_scpiraw_sent(void *arg, struct tcp_pcb *tpcb, u16_t len);
+static void tcp_scpiraw_send(struct tcp_pcb *tpcb, struct tcp_scpirawserver_struct *srv);
+static void tcp_scpiraw_connection_close(struct tcp_pcb *tpcb, struct tcp_scpirawserver_struct *srv);
 
 /**
   * @brief  Initializ the tcp echo server
   * @param  None
   * @retval None
   */
-void tcp_server_vxi_init(void)
+void tcp_server_scpiraw_init(void)
 {
-  tcp_vxiserver_pcb = tcp_new();  // create new tcp pcb
-  if (tcp_vxiserver_pcb != NULL){
+  tcp_scpirawserver_pcb = tcp_new();  // create new tcp pcb
+  if (tcp_scpirawserver_pcb != NULL){
     err_t err;
     // bind _pcb to protocol specific port
-    err = tcp_bind(tcp_vxiserver_pcb, IP_ADDR_ANY, TCP_PORT_VXI11);
+    err = tcp_bind(tcp_scpirawserver_pcb, IP_ADDR_ANY, TCP_PORT_SCPI_RAW);
     if (err == ERR_OK){
       // start tcp listening for _pcb
-      tcp_vxiserver_pcb = tcp_listen(tcp_vxiserver_pcb);
+      tcp_scpirawserver_pcb = tcp_listen(tcp_scpirawserver_pcb);
       // initialize LwIP tcp_accept callback function
-      tcp_accept(tcp_vxiserver_pcb, tcp_vxi_accept);
+      tcp_accept(tcp_scpirawserver_pcb, tcp_scpiraw_accept);
     }
     else{
       // deallocate the pcb
-      memp_free(MEMP_TCP_PCB, tcp_vxiserver_pcb);
+      memp_free(MEMP_TCP_PCB, tcp_scpirawserver_pcb);
     }
   }
 }
@@ -108,30 +108,30 @@ void tcp_server_vxi_init(void)
   * @param  err: not used
   * @retval err_t: error status
   */
-static err_t tcp_vxi_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
+static err_t tcp_scpiraw_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
 {
   err_t ret_err;
-  struct tcp_vxiserver_struct *srv;
+  struct tcp_scpirawserver_struct *srv;
   LWIP_UNUSED_ARG(arg);
   LWIP_UNUSED_ARG(err);
   // set priority for the newly accepted tcp connection newpcb
   tcp_setprio(newpcb, TCP_PRIO_MIN);
   // allocate structure srv to maintain tcp connection informations
-  srv = (struct tcp_vxiserver_struct *)mem_malloc(sizeof(struct tcp_vxiserver_struct));
+  srv = (struct tcp_scpirawserver_struct *)mem_malloc(sizeof(struct tcp_scpirawserver_struct));
   scpi_server = srv;
   scpi_tpcb = newpcb;
   if (srv != NULL){
-    srv->state = VXI_ACCEPTED;
+    srv->state = scpiraw_ACCEPTED;
     srv->pcb = newpcb;
     srv->retries = 0;
     tcp_arg(newpcb, srv);              // pass newly allocated srv structure as argument to newpcb
-    tcp_recv(newpcb, tcp_vxi_recv);    // initialize lwip tcp_recv callback function for newpcb
-    tcp_err(newpcb, tcp_vxi_error);    // initialize lwip tcp_err callback function for newpcb
-    tcp_poll(newpcb, tcp_vxi_poll, 0); // initialize lwip tcp_poll callback function for newpcb
+    tcp_recv(newpcb, tcp_scpiraw_recv);    // initialize lwip tcp_recv callback function for newpcb
+    tcp_err(newpcb, tcp_scpiraw_error);    // initialize lwip tcp_err callback function for newpcb
+    tcp_poll(newpcb, tcp_scpiraw_poll, 0); // initialize lwip tcp_poll callback function for newpcb
     ret_err = ERR_OK;
   }
   else{
-    tcp_vxi_connection_close(newpcb, srv);
+    tcp_scpiraw_connection_close(newpcb, srv);
     ret_err = ERR_MEM; // return memory error
   }
   return ret_err;
@@ -145,39 +145,39 @@ static err_t tcp_vxi_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
   * @param  err: error information regarding the reveived pbuf
   * @retval err_t: error code
   */
-static err_t tcp_vxi_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *bufrx, err_t err)
+static err_t tcp_scpiraw_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *bufrx, err_t err)
 {
-  struct tcp_vxiserver_struct *srv;
+  struct tcp_scpirawserver_struct *srv;
   err_t ret_err;
   LWIP_ASSERT("arg != NULL",arg != NULL);
-  srv = (struct tcp_vxiserver_struct *)arg;
+  srv = (struct tcp_scpirawserver_struct *)arg;
   // if we receive an empty tcp frame from client => close connection
   if (bufrx == NULL){
-	  srv->state = VXI_CLOSING; // remote host closed connection
-       tcp_vxi_connection_close(tpcb, srv); // we're done sending
+    srv->state = scpiraw_CLOSING; // remote host closed connection
+       tcp_scpiraw_connection_close(tpcb, srv); // we're done sending
        ret_err = ERR_OK;
   }
   // else : a non empty frame was received from client but for some reason err != ERR_OK
   else if(err != ERR_OK){
     if (bufrx != NULL){
-    	pbuf_free(bufrx);   // free received pbuf
+      pbuf_free(bufrx);   // free received pbuf
     }
     ret_err = err;
   }
-  else if(srv->state == VXI_ACCEPTED){
-	  srv->state = VXI_RECEIVED; // first data chunk in bufrx->payload
-	  tcp_sent(tpcb, tcp_vxi_sent); // initialize LwIP tcp_sent callback function
-	  SCPI_Input(&scpi_context_tcp, bufrx->payload, bufrx->len);
-	  pbuf_free(bufrx);   // free received pbuf
-	  ret_err = ERR_OK;
+  else if(srv->state == scpiraw_ACCEPTED){
+    srv->state = scpiraw_RECEIVED; // first data chunk in bufrx->payload
+    tcp_sent(tpcb, tcp_scpiraw_sent); // initialize LwIP tcp_sent callback function
+    SCPI_Input(&scpi_context_tcp, bufrx->payload, bufrx->len);
+    pbuf_free(bufrx);   // free received pbuf
+    ret_err = ERR_OK;
   }
-  else if (srv->state == VXI_RECEIVED){
-	  // more data received from client and previous data has been already sent*/
+  else if (srv->state == scpiraw_RECEIVED){
+    // more data received from client and previous data has been already sent*/
       SCPI_Input(&scpi_context_tcp, bufrx->payload, bufrx->len);
       pbuf_free(bufrx);   // free received pbuf
       ret_err = ERR_OK;
   }
-  else if(srv->state == VXI_CLOSING){
+  else if(srv->state == scpiraw_CLOSING){
     // odd case, remote side closing twice, trash data
     tcp_recved(tpcb, bufrx->tot_len);
     pbuf_free(bufrx);
@@ -199,15 +199,15 @@ static err_t tcp_vxi_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *bufrx, e
   * @param  err: not used
   * @retval None
   */
-static void tcp_vxi_error(void *arg, err_t err)
+static void tcp_scpiraw_error(void *arg, err_t err)
 {
-  struct tcp_vxiserver_struct *srv;
+  struct tcp_scpirawserver_struct *srv;
   LWIP_UNUSED_ARG(err);
   scpi_server = NULL;
   scpi_tpcb = NULL;
-  srv = (struct tcp_vxiserver_struct *)arg;
+  srv = (struct tcp_scpirawserver_struct *)arg;
   if (srv != NULL){
-	  mem_free(srv);  //  free srv structure
+    mem_free(srv);  //  free srv structure
   }
 }
 
@@ -217,20 +217,20 @@ static void tcp_vxi_error(void *arg, err_t err)
   * @param  tpcb: pointer on the tcp_pcb for the current tcp connection
   * @retval err_t: error code
   */
-static err_t tcp_vxi_poll(void *arg, struct tcp_pcb *tpcb)
+static err_t tcp_scpiraw_poll(void *arg, struct tcp_pcb *tpcb)
 {
   err_t ret_err;
-  struct tcp_vxiserver_struct *srv;
-  srv = (struct tcp_vxiserver_struct *)arg;
+  struct tcp_scpirawserver_struct *srv;
+  srv = (struct tcp_scpirawserver_struct *)arg;
   if (srv != NULL){
-	  if(srv->state == VXI_CLOSING){
-		tcp_vxi_connection_close(tpcb, srv);
-	  }
-	  ret_err = ERR_OK;
+    if(srv->state == scpiraw_CLOSING){
+    tcp_scpiraw_connection_close(tpcb, srv);
+    }
+    ret_err = ERR_OK;
   }
   else{
-	  tcp_abort(tpcb);     // nothing to be done
-	  ret_err = ERR_ABRT;
+    tcp_abort(tpcb);     // nothing to be done
+    ret_err = ERR_ABRT;
   }
   return ret_err;
 }
@@ -241,20 +241,20 @@ static err_t tcp_vxi_poll(void *arg, struct tcp_pcb *tpcb)
   * @param  None
   * @retval None
   */
-static err_t tcp_vxi_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
+static err_t tcp_scpiraw_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
 {
-  struct tcp_vxiserver_struct *srv;
+  struct tcp_scpirawserver_struct *srv;
   LWIP_UNUSED_ARG(len);
-  srv = (struct tcp_vxiserver_struct *)arg;
+  srv = (struct tcp_scpirawserver_struct *)arg;
   srv->retries = 0;
   //if(srv->buftx != NULL){ // @NOTE was bufrx
     // still got pbufs to send
-    //tcp_sent(tpcb, tcp_vxi_sent);
-    //tcp_vxi_send(tpcb, srv);
+    //tcp_sent(tpcb, tcp_scpiraw_sent);
+    //tcp_scpiraw_send(tpcb, srv);
   //} else{
     // if no more data to send and client closed connection*/
-    if(srv->state == VXI_CLOSING)
-      tcp_vxi_connection_close(tpcb, srv);
+    if(srv->state == scpiraw_CLOSING)
+      tcp_scpiraw_connection_close(tpcb, srv);
   //}
   return ERR_OK;
 }
@@ -265,9 +265,9 @@ static err_t tcp_vxi_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
   * @param  srv: pointer on echo_state structure
   * @retval None
   */
-static void tcp_vxi_send(struct tcp_pcb *tpcb, struct tcp_vxiserver_struct *srv)
+static void tcp_scpiraw_send(struct tcp_pcb *tpcb, struct tcp_scpirawserver_struct *srv)
 {
-	return;
+  return;
 }
 
 /**
@@ -276,7 +276,7 @@ static void tcp_vxi_send(struct tcp_pcb *tpcb, struct tcp_vxiserver_struct *srv)
   * @param  srv: pointer on echo_state structure
   * @retval None
   */
-static void tcp_vxi_connection_close(struct tcp_pcb *tpcb, struct tcp_vxiserver_struct *srv)
+static void tcp_scpiraw_connection_close(struct tcp_pcb *tpcb, struct tcp_scpirawserver_struct *srv)
 {
   // remove all callbacks
   tcp_arg(tpcb, NULL);
@@ -290,47 +290,6 @@ static void tcp_vxi_connection_close(struct tcp_pcb *tpcb, struct tcp_vxiserver_
   tcp_close(tpcb);
   scpi_server = NULL;
   scpi_tpcb = NULL;
-}
-
-// https://lwip.fandom.com/wiki/Raw/TCP#Sending_TCP_data
-size_t SCPI_Write_TCP(scpi_t * context, const char * data, size_t len){
-	(void) context;
-	tcp_sent(scpi_server->pcb, tcp_vxi_sent);
-	err_t wr_err = ERR_OK;
-	while ((wr_err == ERR_OK) && (len <= tcp_sndbuf(scpi_tpcb)))
-	{
-		// enqueue data for transmission
-		wr_err = tcp_write(scpi_tpcb, data, len, 1);
-		if (wr_err == ERR_OK){
-			return len;
-		}else if(wr_err == ERR_MEM){
-			// @todo: we are low on memory, try later / harder
-
-		}else{
-			// other problem ??
-		}
-	}
-	// return fwrite(data, 1, len, stdout);
-	return 0;
-}
-
-int SCPI_Error_TCP(scpi_t * context, int_fast16_t err){
-	return 0;
-}
-
-scpi_result_t SCPI_Control_TCP(scpi_t * context, scpi_ctrl_name_t ctrl, scpi_reg_val_t val){
-	(void) context;
-	return SCPI_RES_OK;
-}
-
-scpi_result_t SCPI_Reset_TCP(scpi_t * context){
-	// reset ADCs etc.
-	return SCPI_RES_OK;
-}
-
-scpi_result_t SCPI_Flush_TCP(scpi_t * context){
-	(void) context;
-	return SCPI_RES_OK;
 }
 
 #endif // LWIP_TCP
