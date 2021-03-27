@@ -1,51 +1,70 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <title>eta Systems SwitchBox</title>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/png" href="img/icon100.png">
-    <style>
-        body {
-	background-color: #dbdbdb;
-	font-family: Arial,Helvetica;
-}
-.header img {
-  float: left;
-  width: 3em;
-  height: 3em;
-}
-.header h1 {
-  position: relative;
-  top: 18px;
-  left: 10px;
-}
-.header a {
-	text-decoration: none;
-}
-.content {
-	width: 100%;
-}
-</style>
+<meta http-equiv="content-type" content="text/html" ; charset="utf-8">
+<title>eta Systems SwitchBox</title>
+<link rel="stylesheet" type="text/css" href="css/webxi.css">
+<link rel="icon" type="image/png" href="img/logo.png">
 </head>
-
 <body>
-    <div class="header">
-        <img src="img/icon100.png" alt="logo" />
-        <h3><a href="https://eta-systems.ch">eta Systems </a> SwitchBox</h3>
-        <br>
-        <br>
-        <p></p>
-    </div>
-    <div class="content">
-        <form method="get" action="/leds.cgi">
-            <!--#tag1-->LED1 (red)
-            <br>
-            <!--#tag2-->LED2 (blue)
-            <br>
-            <input value="OK" type="submit">
-        </form>
-    </div>
+<div id="vertical">
+<div id="image-cont">
+<div id="align-img-cont">
+<a href="https://github.com/eta-systems"> <img id="image" src="img/logo.png"> </a>
+</div>
+</div>
+<div id="space"></div>
+<div id="text-cont">
+<div id="align-txt-cont">
+<table>
+<tbody>
+ <tr class="btn">
+  <th>Manufacturer</th>
+  <td><strong><a href="https://github.com/eta-systems">eta Systems GmbH</a></strong></td>
+ </tr>
+ <tr class="btn">
+  <th>Model</th>
+  <td>Relay Switch Box</td>
+ </tr>
+ <tr class="btn">
+  <th>S/N</th>
+  <td>42-100.000.000-A2021</td>
+ </tr>
+ <tr class="btn">
+  <th>Firmware</th>
+  <td>0.0.03b21v3</td>
+ </tr>
+</tbody>
+</table>
+<form class="btn" method="get" action="/app.cgi">
+<table >
+<tbody>
+ <tr>
+  <td>
+   <label class="switch" for="ck1">
+   <!--#tag1-->
+   <div class="slider round"></div>
+   </label>
+  </td>
+  <td>LXI Discovery</td>
+ </tr>
+ <tr>
+  <td>
+    <label class="switch" for="ck2">
+    <!--#tag2-->
+    <div class="slider round"></div>
+   </label>
+  </td>
+  <td>Frontpanel LED</td>
+ </tr>
+</tbody>
+</table>
+<input value="OK" type="submit">
+</form>
+<p>&copy;2021 eta Systems GmbH | Design: <a href="https://github.com/mnemocron/webxi">WebXi</a>
+</div>
+</div>
+</div>
 </body>
 
 </html>
