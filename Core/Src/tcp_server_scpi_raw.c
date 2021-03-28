@@ -45,7 +45,7 @@
 
 #if LWIP_TCP
 
-extern scpi_t scpi_context_tcp;
+extern scpi_t scpi_context_vxi;
 
 static struct tcp_pcb *tcp_scpirawserver_pcb;
 extern struct tcp_scpirawserver_struct *scpi_server;
@@ -167,13 +167,13 @@ static err_t tcp_scpiraw_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *bufr
   else if(srv->state == scpiraw_ACCEPTED){
     srv->state = scpiraw_RECEIVED; // first data chunk in bufrx->payload
     tcp_sent(tpcb, tcp_scpiraw_sent); // initialize LwIP tcp_sent callback function
-    SCPI_Input(&scpi_context_tcp, bufrx->payload, bufrx->len);
+    SCPI_Input(&scpi_context_vxi, bufrx->payload, bufrx->len);
     pbuf_free(bufrx);   // free received pbuf
     ret_err = ERR_OK;
   }
   else if (srv->state == scpiraw_RECEIVED){
     // more data received from client and previous data has been already sent*/
-      SCPI_Input(&scpi_context_tcp, bufrx->payload, bufrx->len);
+      SCPI_Input(&scpi_context_vxi, bufrx->payload, bufrx->len);
       pbuf_free(bufrx);   // free received pbuf
       ret_err = ERR_OK;
   }
@@ -257,17 +257,6 @@ static err_t tcp_scpiraw_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
       tcp_scpiraw_connection_close(tpcb, srv);
   //}
   return ERR_OK;
-}
-
-/**
-  * @brief  This function is used to send data for tcp connection
-  * @param  tpcb: pointer on the tcp_pcb connection
-  * @param  srv: pointer on echo_state structure
-  * @retval None
-  */
-static void tcp_scpiraw_send(struct tcp_pcb *tpcb, struct tcp_scpirawserver_struct *srv)
-{
-  return;
 }
 
 /**

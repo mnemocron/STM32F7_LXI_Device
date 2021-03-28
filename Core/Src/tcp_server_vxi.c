@@ -45,7 +45,7 @@
 
 #if LWIP_TCP
 
-extern scpi_t scpi_context_tcp;
+extern scpi_t scpi_context_vxi;
 
 static struct tcp_pcb *tcp_vxiserver_pcb;
 struct tcp_vxiserver_struct *scpi_server;
@@ -73,7 +73,7 @@ static err_t tcp_vxi_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *bufrx, e
 static void tcp_vxi_error(void *arg, err_t err);
 static err_t tcp_vxi_poll(void *arg, struct tcp_pcb *tpcb);
 static err_t tcp_vxi_sent(void *arg, struct tcp_pcb *tpcb, u16_t len);
-static void tcp_vxi_send(struct tcp_pcb *tpcb, struct tcp_vxiserver_struct *srv);
+// static void tcp_vxi_send(struct tcp_pcb *tpcb, struct tcp_vxiserver_struct *srv);
 static void tcp_vxi_connection_close(struct tcp_pcb *tpcb, struct tcp_vxiserver_struct *srv);
 
 /**
@@ -167,13 +167,13 @@ static err_t tcp_vxi_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *bufrx, e
   else if(srv->state == VXI_ACCEPTED){
 	  srv->state = VXI_RECEIVED; // first data chunk in bufrx->payload
 	  tcp_sent(tpcb, tcp_vxi_sent); // initialize LwIP tcp_sent callback function
-	  SCPI_Input(&scpi_context_tcp, bufrx->payload, bufrx->len);
+	  SCPI_Input(&scpi_context_vxi, bufrx->payload, bufrx->len);
 	  pbuf_free(bufrx);   // free received pbuf
 	  ret_err = ERR_OK;
   }
   else if (srv->state == VXI_RECEIVED){
 	  // more data received from client and previous data has been already sent*/
-      SCPI_Input(&scpi_context_tcp, bufrx->payload, bufrx->len);
+      SCPI_Input(&scpi_context_vxi, bufrx->payload, bufrx->len);
       pbuf_free(bufrx);   // free received pbuf
       ret_err = ERR_OK;
   }
@@ -260,17 +260,6 @@ static err_t tcp_vxi_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
 }
 
 /**
-  * @brief  This function is used to send data for tcp connection
-  * @param  tpcb: pointer on the tcp_pcb connection
-  * @param  srv: pointer on echo_state structure
-  * @retval None
-  */
-static void tcp_vxi_send(struct tcp_pcb *tpcb, struct tcp_vxiserver_struct *srv)
-{
-	return;
-}
-
-/**
   * @brief  This functions clossrv the tcp connection
   * @param  tcp_pcb: pointer on the tcp connection
   * @param  srv: pointer on echo_state structure
@@ -315,21 +304,41 @@ size_t SCPI_Write_TCP(scpi_t * context, const char * data, size_t len){
 }
 
 int SCPI_Error_TCP(scpi_t * context, int_fast16_t err){
+	printf("[scpi]: error tcp\n");
 	return 0;
 }
 
 scpi_result_t SCPI_Control_TCP(scpi_t * context, scpi_ctrl_name_t ctrl, scpi_reg_val_t val){
 	(void) context;
+	printf("[scpi]: control tcp\n");
 	return SCPI_RES_OK;
 }
 
 scpi_result_t SCPI_Reset_TCP(scpi_t * context){
 	// reset ADCs etc.
+	printf("[scpi]: reset tcp\n");
 	return SCPI_RES_OK;
 }
 
 scpi_result_t SCPI_Flush_TCP(scpi_t * context){
 	(void) context;
+	printf("[scpi]: flush tcp\n");
+	tcp_sent(scpi_server->pcb, tcp_vxi_sent);
+	err_t wr_err = ERR_OK;
+	char data[] = "asdf"; size_t len=4;
+	while ((wr_err == ERR_OK) && (len <= tcp_sndbuf(scpi_tpcb)))
+	{
+		// enqueue data for transmission
+		wr_err = tcp_write(scpi_tpcb, data, len, 1);
+		if (wr_err == ERR_OK){
+			return len;
+		}else if(wr_err == ERR_MEM){
+			// @todo: we are low on memory, try later / harder
+
+		}else{
+			// other problem ??
+		}
+	}
 	return SCPI_RES_OK;
 }
 

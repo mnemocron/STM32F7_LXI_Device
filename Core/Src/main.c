@@ -64,10 +64,10 @@ uint8_t uart_rx_buffer_data[128];
 char temp[128];  // to pass UART Rx Ringbuffer to SCPI Input
 uint8_t flag_interpret_scpi = 0;
 
-extern   scpi_t scpi_context;
-extern   scpi_t scpi_context_tcp;
 uint32_t dacValue;
 
+extern scpi_interface_t scpi_interface_vxi;
+extern scpi_interface_t scpi_interface;
 extern struct netif gnetif;
 /* USER CODE END PV */
 
@@ -142,13 +142,13 @@ int main(void)
 	     	scpi_error_queue_data, SCPI_ERROR_QUEUE_SIZE);
 
 	// initialize SCPI Interface for TCP/IP Connection
-	SCPI_Init(&scpi_context_tcp,
+	SCPI_Init(&scpi_context_vxi,
 		     	scpi_commands,
-		     	&scpi_interface_tcp,
+		     	&scpi_interface_vxi,
 		     	scpi_units_def,
 		     	SCPI_IDN1, SCPI_IDN2, SCPI_IDN3, SCPI_IDN4,
-		     	(char*)&scpi_input_buffer_tcp, SCPI_INPUT_BUFFER_LENGTH,
-		     	scpi_error_queue_data_tcp, SCPI_ERROR_QUEUE_SIZE);
+		     	(char*)&scpi_input_buffer_vxi, SCPI_INPUT_BUFFER_LENGTH,
+		     	scpi_error_queue_data_vxi, SCPI_ERROR_QUEUE_SIZE);
 
 	__HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);  // must be enabled again
 	// __HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE);  // @Bug : gets stuck in TIM1 interrupt. Priority issue because of systick?

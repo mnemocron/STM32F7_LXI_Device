@@ -155,7 +155,7 @@ scpi_interface_t scpi_interface = {
     .reset = SCPI_Reset,
 };
 
-scpi_interface_t scpi_interface_tcp = {
+scpi_interface_t scpi_interface_vxi = {
     .error = SCPI_Error_TCP,
     .write = SCPI_Write_TCP,
     .control = SCPI_Control_TCP,
@@ -167,9 +167,9 @@ char scpi_input_buffer[SCPI_INPUT_BUFFER_LENGTH];
 scpi_error_t scpi_error_queue_data[SCPI_ERROR_QUEUE_SIZE];
 scpi_t scpi_context;
 
-char scpi_input_buffer_tcp[SCPI_INPUT_BUFFER_LENGTH];
-scpi_error_t scpi_error_queue_data_tcp[SCPI_ERROR_QUEUE_SIZE];
-scpi_t scpi_context_tcp;
+char scpi_input_buffer_vxi[SCPI_INPUT_BUFFER_LENGTH];
+scpi_error_t scpi_error_queue_data_vxi[SCPI_ERROR_QUEUE_SIZE];
+scpi_t scpi_context_vxi;
 
 size_t SCPI_Write(scpi_t * context, const char * data, size_t len){
 	(void) context;

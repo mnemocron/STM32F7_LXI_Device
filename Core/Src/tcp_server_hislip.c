@@ -45,7 +45,7 @@
 
 #if LWIP_TCP
 
-extern scpi_t scpi_context_tcp;
+extern scpi_t scpi_context_vxi;
 
 static struct tcp_pcb *tcp_hislipserver_pcb;
 extern struct tcp_hislipserver_struct *scpi_server;
@@ -167,13 +167,13 @@ static err_t tcp_hislip_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *bufrx
   else if(srv->state == hislip_ACCEPTED){
 	  srv->state = hislip_RECEIVED; // first data chunk in bufrx->payload
 	  tcp_sent(tpcb, tcp_hislip_sent); // initialize LwIP tcp_sent callback function
-	  SCPI_Input(&scpi_context_tcp, bufrx->payload, bufrx->len);
+	  SCPI_Input(&scpi_context_vxi, bufrx->payload, bufrx->len);
 	  pbuf_free(bufrx);   // free received pbuf
 	  ret_err = ERR_OK;
   }
   else if (srv->state == hislip_RECEIVED){
 	  // more data received from client and previous data has been already sent*/
-      SCPI_Input(&scpi_context_tcp, bufrx->payload, bufrx->len);
+      SCPI_Input(&scpi_context_vxi, bufrx->payload, bufrx->len);
       pbuf_free(bufrx);   // free received pbuf
       ret_err = ERR_OK;
   }
@@ -257,17 +257,6 @@ static err_t tcp_hislip_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
       tcp_hislip_connection_close(tpcb, srv);
   //}
   return ERR_OK;
-}
-
-/**
-  * @brief  This function is used to send data for tcp connection
-  * @param  tpcb: pointer on the tcp_pcb connection
-  * @param  srv: pointer on echo_state structure
-  * @retval None
-  */
-static void tcp_hislip_send(struct tcp_pcb *tpcb, struct tcp_hislipserver_struct *srv)
-{
-	return;
 }
 
 /**
