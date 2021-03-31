@@ -22,6 +22,14 @@
 
 #include "lwip/err.h"
 #include "lwip/netif.h"
+#include "cmsis_os.h"
+
+/* Exported types ------------------------------------------------------------*/
+/* Structure that include link thread parameters */
+struct link_str {
+  struct netif *netif;
+  osSemaphoreId semaphore;
+};
 
 /* Within 'USER CODE' section, code will be kept by default at each generation */
 /* USER CODE BEGIN 0 */
@@ -31,8 +39,8 @@
 /* Exported functions ------------------------------------------------------- */
 err_t ethernetif_init(struct netif *netif);
 
-void ethernetif_input(struct netif *netif);
-void ethernetif_set_link(struct netif *netif);
+void ethernetif_input(void* argument);
+void ethernetif_set_link(void* argument);
 void ethernetif_update_config(struct netif *netif);
 void ethernetif_notify_conn_changed(struct netif *netif);
 
