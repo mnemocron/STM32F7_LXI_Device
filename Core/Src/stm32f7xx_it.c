@@ -65,7 +65,7 @@ extern UART_HandleTypeDef huart3;
 extern TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN EV */
-extern scpi_t scpi_context;
+extern scpi_t scpi_context_serial;
 extern uint8_t flag_interpret_scpi;
 extern lwrb_t ringbuffer;
 /* USER CODE END EV */
@@ -94,6 +94,7 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
+
 
   /* USER CODE END HardFault_IRQn 0 */
   while (1)

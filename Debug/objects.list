@@ -2,6 +2,7 @@
 "Core/Src/http_cgi_app.o"
 "Core/Src/main.o"
 "Core/Src/scpi-def.o"
+"Core/Src/scpi_server.o"
 "Core/Src/stm32f7xx_hal_msp.o"
 "Core/Src/stm32f7xx_hal_timebase_tim.o"
 "Core/Src/stm32f7xx_it.o"

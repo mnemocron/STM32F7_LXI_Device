@@ -32,6 +32,7 @@
 #include "lwrb/lwrb.h"
 #include "http_cgi_app.h"
 #include "lwip/apps/httpd.h"
+#include "scpi_server.h"
 
 // @note MAC ADDRESS    00:80:e1:00:00:00
 // @todo Assertion "HTTP headers not included in file system" failed at line 2372 in ../Middlewares/Third_Party/LwIP/src/apps/http/httpd.c
@@ -73,7 +74,7 @@ uint8_t flag_interpret_scpi = 0;
 uint32_t dacValue;
 
 extern scpi_interface_t scpi_interface_vxi;
-extern scpi_interface_t scpi_interface;
+extern scpi_interface_t scpi_interface_serial;
 extern struct netif gnetif;
 /* USER CODE END PV */
 
@@ -133,15 +134,16 @@ int main(void)
 	lwrb_init(&ringbuffer, uart_rx_buffer_data, sizeof(uart_rx_buffer_data));
 
 	// initialize SCPI Interface for UART Connection
-	SCPI_Init(&scpi_context,
+	SCPI_Init(&scpi_context_serial,
 	     	scpi_commands,
-	     	&scpi_interface,
+	     	&scpi_interface_serial,
 	     	scpi_units_def,
 	     	SCPI_IDN1, SCPI_IDN2, SCPI_IDN3, SCPI_IDN4,
-	     	(char*)&scpi_input_buffer, SCPI_INPUT_BUFFER_LENGTH,
-	     	scpi_error_queue_data, SCPI_ERROR_QUEUE_SIZE);
+	     	(char*)&scpi_input_buffer_serial, SCPI_INPUT_BUFFER_LENGTH,
+	     	scpi_error_queue_data_serial, SCPI_ERROR_QUEUE_SIZE);
 
 	// initialize SCPI Interface for TCP/IP Connection
+	/*
 	SCPI_Init(&scpi_context_vxi,
 		     	scpi_commands,
 		     	&scpi_interface_vxi,
@@ -149,11 +151,12 @@ int main(void)
 		     	SCPI_IDN1, SCPI_IDN2, SCPI_IDN3, SCPI_IDN4,
 		     	(char*)&scpi_input_buffer_vxi, SCPI_INPUT_BUFFER_LENGTH,
 		     	scpi_error_queue_data_vxi, SCPI_ERROR_QUEUE_SIZE);
+	 */
 
 	__HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);  // must be enabled again
 	// __HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE);  // @Bug : gets stuck in TIM1 interrupt. Priority issue because of systick?
 
-	SCPI_Input(&scpi_context, "*IDN?\n", 6);
+	SCPI_Input(&scpi_context_serial, "*IDN?\n", 6);
 
   /* USER CODE END 2 */
 
@@ -178,6 +181,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of defaultTask */
+  scpi_server_init();
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -409,7 +413,7 @@ void StartDefaultTask(void *argument)
 		/** @todo : does this work without the temp buffer ? */
 		uint8_t len = lwrb_get_full(&ringbuffer);
 		lwrb_read(&ringbuffer, temp, len);
-		SCPI_Input(&scpi_context, temp, len);
+		SCPI_Input(&scpi_context_serial, temp, len);
 	}
   }
   /* USER CODE END 5 */

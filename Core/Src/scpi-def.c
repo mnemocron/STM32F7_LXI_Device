@@ -141,6 +141,11 @@ static scpi_result_t DMM_ConfigureVoltageDc(scpi_t * context) {
 // :TEST:BOOL 0
 static scpi_result_t TEST_Bool(scpi_t * context) {
     scpi_bool_t param1;
+    char data[24];
+    size_t len;
+    len = sprintf(data, "TEST:BOOL\r\n");
+    SCPI_ResultCharacters(context, data, len);  // write directly to output
+
     fprintf(stderr, "TEST:BOOL\r\n"); /* debug command name */
 
     /* read first parameter if present */
@@ -148,6 +153,8 @@ static scpi_result_t TEST_Bool(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
+    len = sprintf(data, "\tP1=%d\r\n", param1);
+    SCPI_ResultCharacters(context, data, len);
     fprintf(stderr, "\tP1=%d\r\n", param1);
 
     return SCPI_RES_OK;
@@ -436,12 +443,12 @@ const scpi_command_t scpi_commands[] = {
     SCPI_CMD_LIST_END
 };
 
-scpi_interface_t scpi_interface = {
-    .error = SCPI_Error,
-    .write = SCPI_Write,
-    .control = SCPI_Control,
-    .flush = SCPI_Flush,
-    .reset = SCPI_Reset,
+scpi_interface_t scpi_interface_serial = {
+    .error = SCPI_Error_Serial,
+    .write = SCPI_Write_Serial,
+    .control = SCPI_Control_Serial,
+    .flush = SCPI_Flush_Serial,
+    .reset = SCPI_Reset_Serial,
 };
 
 scpi_interface_t scpi_interface_vxi = {
@@ -452,34 +459,34 @@ scpi_interface_t scpi_interface_vxi = {
     .reset = SCPI_Reset_TCP,
 };
 
-char scpi_input_buffer[SCPI_INPUT_BUFFER_LENGTH];
-scpi_error_t scpi_error_queue_data[SCPI_ERROR_QUEUE_SIZE];
-scpi_t scpi_context;
+char scpi_input_buffer_serial[SCPI_INPUT_BUFFER_LENGTH];
+scpi_error_t scpi_error_queue_data_serial[SCPI_ERROR_QUEUE_SIZE];
+scpi_t scpi_context_serial;
 
 char scpi_input_buffer_vxi[SCPI_INPUT_BUFFER_LENGTH];
 scpi_error_t scpi_error_queue_data_vxi[SCPI_ERROR_QUEUE_SIZE];
 scpi_t scpi_context_vxi;
 
-size_t SCPI_Write(scpi_t * context, const char * data, size_t len){
+size_t SCPI_Write_Serial(scpi_t * context, const char * data, size_t len){
 	(void) context;
 	return fwrite(data, 1, len, stdout);
 }
 
-int SCPI_Error(scpi_t * context, int_fast16_t err){
+int SCPI_Error_Serial(scpi_t * context, int_fast16_t err){
 	return 0;
 }
 
-scpi_result_t SCPI_Control(scpi_t * context, scpi_ctrl_name_t ctrl, scpi_reg_val_t val){
+scpi_result_t SCPI_Control_Serial(scpi_t * context, scpi_ctrl_name_t ctrl, scpi_reg_val_t val){
 	(void) context;
 	return SCPI_RES_OK;
 }
 
-scpi_result_t SCPI_Reset(scpi_t * context){
+scpi_result_t SCPI_Reset_Serial(scpi_t * context){
 	// reset ADCs etc.
 	return SCPI_RES_OK;
 }
 
-scpi_result_t SCPI_Flush(scpi_t * context){
+scpi_result_t SCPI_Flush_Serial(scpi_t * context){
 	(void) context;
 	return SCPI_RES_OK;
 }
