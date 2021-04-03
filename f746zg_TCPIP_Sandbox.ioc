@@ -1,6 +1,6 @@
 #MicroXplorer Configuration settings - do not modify
 Mcu.Family=STM32F7
-NVIC.USART3_IRQn=true\:5\:0\:true\:false\:true\:true\:true\:true
+NVIC.USART3_IRQn=true\:7\:0\:true\:false\:true\:true\:true\:true
 ProjectManager.MainLocation=Core/Src
 RCC.MCOFreq_Value=72000000
 PB13.GPIOParameters=GPIO_Label
@@ -97,7 +97,7 @@ PB13.Locked=true
 RCC.TIM2Freq_Value=72000000
 Mcu.Pin0=PC13
 Mcu.Pin1=PC14/OSC32_IN
-NVIC.ETH_IRQn=true\:6\:0\:true\:false\:true\:true\:true\:true
+NVIC.ETH_IRQn=true\:8\:0\:true\:false\:true\:true\:true\:true
 GPIO.groupedBy=Group By Peripherals
 Mcu.Pin2=PC15/OSC32_OUT
 Mcu.Pin3=PH0/OSC_IN

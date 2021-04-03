@@ -53,7 +53,6 @@
 #include "queue.h"
 #include "scpi_server.h"
 
-
 #define DEVICE_PORT 5025
 #define CONTROL_PORT 5026
 
@@ -73,7 +72,7 @@ typedef struct {
     struct netconn *control_io_listen;
     struct netconn *io;
     struct netconn *control_io;
-    QueueHandle_t evtQueue;
+    xQueueHandle evtQueue;
     /* FILE * fio; */
     /* fd_set fds; */
 } user_data_t;
@@ -84,6 +83,7 @@ struct _queue_event_t {
     int16_t param2;
 } __attribute__((__packed__));
 typedef struct _queue_event_t queue_event_t;
+
 
 user_data_t user_data = {
     .io_listen = NULL,
@@ -122,17 +122,6 @@ int SCPI_Error(scpi_t * context, int_fast16_t err) {
     (void) context;
     /* BEEP */
     iprintf("**ERROR: %ld, \"%s\"\r\n", (int32_t) err, SCPI_ErrorTranslate(err));
-    /*
-    if (context->user_context != NULL) {
-    	user_data_t * u = (user_data_t *) (context->user_context);
-    	if (u->io) {
-    		char data[64];
-			size_t len;
-			len = snprintf(data, "ERROR: %ld \"%s\"\r\n", (int32_t) err, SCPI_ErrorTranslate(err), 64);
-			return (netconn_write(u->io, data, len, NETCONN_NOCOPY) == ERR_OK) ? len : 0;
-    	}
-    }
-    */
     if (err != 0) {
         /* New error */
         /* Beep */
@@ -169,11 +158,6 @@ scpi_result_t SCPI_Reset(scpi_t * context) {
     return SCPI_RES_OK;
 }
 
-scpi_result_t SCPI_SystemCommTcpipControlQ(scpi_t * context) {
-    SCPI_ResultInt(context, CONTROL_PORT);
-    return SCPI_RES_OK;
-}
-
 scpi_interface_t scpi_interface = {
     .error = SCPI_Error,
     .write = SCPI_Write,
@@ -181,6 +165,11 @@ scpi_interface_t scpi_interface = {
     .flush = SCPI_Flush,
     .reset = SCPI_Reset,
 };
+
+scpi_result_t SCPI_SystemCommTcpipControlQ(scpi_t * context) {
+    SCPI_ResultInt(context, CONTROL_PORT);
+    return SCPI_RES_OK;
+}
 
 static void setEseReq(void) {
     SCPI_RegSetBits(&scpi_context, SCPI_REG_ESR, ESR_REQ);
@@ -407,6 +396,7 @@ static void scpi_server_thread(void *arg) {
 
     user_data.io_listen = createServer(DEVICE_PORT);
     LWIP_ASSERT("user_data.io_listen != NULL", user_data.io_listen != NULL);
+
     user_data.control_io_listen = createServer(CONTROL_PORT);
     LWIP_ASSERT("user_data.control_io_listen != NULL", user_data.control_io_listen != NULL);
 
@@ -440,43 +430,15 @@ static void scpi_server_thread(void *arg) {
         if (evt.cmd == SCPI_MSG_SET_ERROR) {
             setError(evt.param2);
         }
+
     }
 
     vTaskDelete(NULL);
 }
 
-const osThreadAttr_t scpiServerTask_attributes = {
-  .name = "SCPI",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) SCPI_THREAD_PRIO,
-};
-
-osThreadId_t bonkTaskHandle;
-const osThreadAttr_t bonkTask_attributes = {
-  .name = "bonk",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
-
 void scpi_server_init(void) {
-	printf("SCPI server init...");
-	// bonkTaskHandle = osThreadNew(BonkTask, NULL, &bonkTask_attributes);
     TaskHandle_t xHandle = NULL;
-    // osThreadId_t scpiServerHandle = NULL;
     BaseType_t xReturned;
     xReturned = xTaskCreate(scpi_server_thread, "SCPI", DEFAULT_THREAD_STACKSIZE, NULL, SCPI_THREAD_PRIO, &xHandle);
-    // scpiServerHandle = osThreadNew(scpi_server_thread, NULL, &scpiServerTask_attributes);
     LWIP_ASSERT("scpi_server_init failed", xReturned == pdPASS);
-    // LWIP_ASSERT("scpi_server_init failed", scpiServerHandle != NULL);
-    printf("Done\n");
 }
-
-
-void BonkTask(void *argument)
-{
-	for(;;){
-		osDelay(2000);
-		printf("bonk\n");
-	}
-}
-

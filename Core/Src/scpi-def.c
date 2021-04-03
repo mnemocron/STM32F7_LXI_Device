@@ -181,7 +181,6 @@ scpi_choice_def_t trigger_source[] = {
 
 // :TEST:CHOICE? BUS
 static scpi_result_t TEST_ChoiceQ(scpi_t * context) {
-
     int32_t param;
     const char * name;
 
@@ -194,7 +193,7 @@ static scpi_result_t TEST_ChoiceQ(scpi_t * context) {
     txlen = snprintf(txbuf, TXBUFLEN, "\tP1=%s (%ld)\r\n", name, (long int) param);
     SCPI_ResultCharacters(context, txbuf, txlen);
 
-    SCPI_ResultInt32(context, param);
+    // SCPI_ResultInt32(context, param);
 
     return SCPI_RES_OK;
 }

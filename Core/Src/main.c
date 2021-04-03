@@ -178,12 +178,11 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  scpi_server_init();
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  scpi_server_init();
-  // tcpecho_init();
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -382,10 +381,6 @@ void StartDefaultTask(void *argument)
 {
   /* init code for LWIP */
   MX_LWIP_Init();
-
-  httpd_init();
-  myCGIinit();
-  mySSIinit();
 
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
