@@ -25,14 +25,15 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "tcp_echoserver.h"
-#include "tcp_server_vxi.h"
+//#include "tcp_echoserver.h"
+// #include "tcp_server_vxi.h"
 #include "scpi/scpi.h"          // SCPI Library
 #include "scpi-def.h"           // SCPI User Code
 #include "lwrb/lwrb.h"
 #include "http_cgi_app.h"
 #include "lwip/apps/httpd.h"
 #include "scpi_server.h"
+#include "tcpecho.h"
 
 // @note MAC ADDRESS    00:80:e1:00:00:00
 // @todo Assertion "HTTP headers not included in file system" failed at line 2372 in ../Middlewares/Third_Party/LwIP/src/apps/http/httpd.c
@@ -182,6 +183,7 @@ int main(void)
   /* Create the thread(s) */
   /* creation of defaultTask */
   scpi_server_init();
+  // tcpecho_init();
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */

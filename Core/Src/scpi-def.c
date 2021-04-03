@@ -60,11 +60,15 @@
 extern uint32_t dacValue;
 /* USER CODE END EV */
 
+#define TXBUFLEN 128
+char txbuf[TXBUFLEN];
+size_t txlen;
+
 
 static scpi_result_t DMM_MeasureVoltageDcQ(scpi_t * context) {
     scpi_number_t param1, param2;
     char bf[15];
-    fprintf(stderr, "meas:volt:dc\r\n"); /* debug command name */
+    // fprintf(stderr, "meas:volt:dc\r\n"); /* debug command name */
 
     /* read first parameter if present */
     if (!SCPI_ParamNumber(context, scpi_special_numbers_def, &param1, FALSE)) {
@@ -78,11 +82,15 @@ static scpi_result_t DMM_MeasureVoltageDcQ(scpi_t * context) {
 
 
     SCPI_NumberToStr(context, scpi_special_numbers_def, &param1, bf, 15);
-    fprintf(stderr, "\tP1=%s\r\n", bf);
+    // fprintf(stderr, "\tP1=%s\r\n", bf);
+    txlen = snprintf(txbuf, TXBUFLEN, "\tP1=%s\r\n", bf);
+    SCPI_ResultCharacters(context, txbuf, txlen);
 
 
     SCPI_NumberToStr(context, scpi_special_numbers_def, &param2, bf, 15);
-    fprintf(stderr, "\tP2=%s\r\n", bf);
+    // fprintf(stderr, "\tP2=%s\r\n", bf);
+    txlen = snprintf(txbuf, TXBUFLEN, "\tP2=%s\r\n", bf);
+    SCPI_ResultCharacters(context, txbuf, txlen);
 
     SCPI_ResultDouble(context, 0);
 
@@ -92,7 +100,7 @@ static scpi_result_t DMM_MeasureVoltageDcQ(scpi_t * context) {
 static scpi_result_t DMM_MeasureVoltageAcQ(scpi_t * context) {
     scpi_number_t param1, param2;
     char bf[15];
-    fprintf(stderr, "meas:volt:ac\r\n"); /* debug command name */
+    //fprintf(stderr, "meas:volt:ac\r\n"); /* debug command name */
 
     /* read first parameter if present */
     if (!SCPI_ParamNumber(context, scpi_special_numbers_def, &param1, FALSE)) {
@@ -104,13 +112,16 @@ static scpi_result_t DMM_MeasureVoltageAcQ(scpi_t * context) {
         /* do something, if parameter not present */
     }
 
-
     SCPI_NumberToStr(context, scpi_special_numbers_def, &param1, bf, 15);
-    fprintf(stderr, "\tP1=%s\r\n", bf);
+    // fprintf(stderr, "\tP1=%s\r\n", bf);
+    txlen = snprintf(txbuf, TXBUFLEN, "\tP1=%s\r\n", bf);
+    SCPI_ResultCharacters(context, txbuf, txlen);
 
 
     SCPI_NumberToStr(context, scpi_special_numbers_def, &param2, bf, 15);
-    fprintf(stderr, "\tP2=%s\r\n", bf);
+    // fprintf(stderr, "\tP2=%s\r\n", bf);
+    txlen = snprintf(txbuf, TXBUFLEN, "\tP2=%s\r\n", bf);
+    SCPI_ResultCharacters(context, txbuf, txlen);
 
     SCPI_ResultDouble(context, 0);
 
@@ -119,7 +130,7 @@ static scpi_result_t DMM_MeasureVoltageAcQ(scpi_t * context) {
 
 static scpi_result_t DMM_ConfigureVoltageDc(scpi_t * context) {
     double param1, param2;
-    fprintf(stderr, "conf:volt:dc\r\n"); /* debug command name */
+    // fprintf(stderr, "conf:volt:dc\r\n"); /* debug command name */
 
     /* read first parameter if present */
     if (!SCPI_ParamDouble(context, &param1, TRUE)) {
@@ -131,8 +142,12 @@ static scpi_result_t DMM_ConfigureVoltageDc(scpi_t * context) {
         /* do something, if parameter not present */
     }
 
-    fprintf(stderr, "\tP1=%lf\r\n", param1);
-    fprintf(stderr, "\tP2=%lf\r\n", param2);
+    // fprintf(stderr, "\tP1=%lf\r\n", param1);
+    // fprintf(stderr, "\tP2=%lf\r\n", param2);
+    txlen = snprintf(txbuf, TXBUFLEN, "\tP1=%lf\r\n", param1);
+	SCPI_ResultCharacters(context, txbuf, txlen);
+	txlen = snprintf(txbuf, TXBUFLEN, "\tP2=%lf\r\n", param2);
+	SCPI_ResultCharacters(context, txbuf, txlen);
 
     return SCPI_RES_OK;
 }
@@ -141,21 +156,18 @@ static scpi_result_t DMM_ConfigureVoltageDc(scpi_t * context) {
 // :TEST:BOOL 0
 static scpi_result_t TEST_Bool(scpi_t * context) {
     scpi_bool_t param1;
-    char data[24];
-    size_t len;
-    len = sprintf(data, "TEST:BOOL\r\n");
-    SCPI_ResultCharacters(context, data, len);  // write directly to output
-
-    fprintf(stderr, "TEST:BOOL\r\n"); /* debug command name */
+    // fprintf(stderr, "TEST:BOOL\r\n"); /* debug command name */
+    txlen = snprintf(txbuf, TXBUFLEN, "TEST:BOOL\r\n");
+    SCPI_ResultCharacters(context, txbuf, txlen);  // write directly to output
 
     /* read first parameter if present */
     if (!SCPI_ParamBool(context, &param1, TRUE)) {
         return SCPI_RES_ERR;
     }
 
-    len = sprintf(data, "\tP1=%d\r\n", param1);
-    SCPI_ResultCharacters(context, data, len);
-    fprintf(stderr, "\tP1=%d\r\n", param1);
+    txlen = snprintf(txbuf, TXBUFLEN, "\tP1=%d\r\n", param1);
+    SCPI_ResultCharacters(context, txbuf, txlen);
+    // fprintf(stderr, "\tP1=%d\r\n", param1);
 
     return SCPI_RES_OK;
 }
@@ -178,7 +190,9 @@ static scpi_result_t TEST_ChoiceQ(scpi_t * context) {
     }
 
     SCPI_ChoiceToName(trigger_source, param, &name);
-    fprintf(stderr, "\tP1=%s (%ld)\r\n", name, (long int) param);
+    // fprintf(stderr, "\tP1=%s (%ld)\r\n", name, (long int) param);
+    txlen = snprintf(txbuf, TXBUFLEN, "\tP1=%s (%ld)\r\n", name, (long int) param);
+    SCPI_ResultCharacters(context, txbuf, txlen);
 
     SCPI_ResultInt32(context, param);
 
@@ -191,7 +205,9 @@ static scpi_result_t TEST_Numbers(scpi_t * context) {
 
     SCPI_CommandNumbers(context, numbers, 2, 1);
 
-    fprintf(stderr, "TEST numbers %d %d\r\n", numbers[0], numbers[1]);
+    // fprintf(stderr, "TEST numbers %d %d\r\n", numbers[0], numbers[1]);
+    txlen = snprintf(txbuf, TXBUFLEN, "TEST numbers %d %d\r\n", (int)numbers[0], (int)numbers[1]);
+    SCPI_ResultCharacters(context, txbuf, txlen);
 
     return SCPI_RES_OK;
 }
@@ -205,7 +221,9 @@ static scpi_result_t TEST_Text(scpi_t * context) {
         buffer[0] = '\0';
     }
 
-    fprintf(stderr, "TEXT: ***%s***\r\n", buffer);
+    // fprintf(stderr, "TEXT: ***%s***\r\n", buffer);
+    txlen = snprintf(txbuf, TXBUFLEN, "TEXT: ***%s***\r\n", buffer);
+    SCPI_ResultCharacters(context, txbuf, txlen);
 
     return SCPI_RES_OK;
 }
@@ -361,11 +379,17 @@ static scpi_result_t TEST_Chanlst(scpi_t *context) {
 
     {
         size_t i;
-        fprintf(stderr, "TEST_Chanlst: ");
+        // fprintf(stderr, "TEST_Chanlst: ");
+        txlen = snprintf(txbuf, TXBUFLEN, "TEST_Chanlst: ");
+        SCPI_ResultCharacters(context, txbuf, txlen);
         for (i = 0; i< arr_idx; i++) {
-            fprintf(stderr, "%d!%d, ", array[i].row, array[i].col);
+            // fprintf(stderr, "%d!%d, ", array[i].row, array[i].col);
+            txlen = snprintf(txbuf, TXBUFLEN, "%d!%d, ", (int)array[i].row, (int)array[i].col);
+            SCPI_ResultCharacters(context, txbuf, txlen);
         }
-        fprintf(stderr, "\r\n");
+        // fprintf(stderr, "\r\n");
+        txlen = snprintf(txbuf, TXBUFLEN, "\r\n");
+        SCPI_ResultCharacters(context, txbuf, txlen);
     }
     return SCPI_RES_OK;
 }

@@ -122,6 +122,17 @@ int SCPI_Error(scpi_t * context, int_fast16_t err) {
     (void) context;
     /* BEEP */
     iprintf("**ERROR: %ld, \"%s\"\r\n", (int32_t) err, SCPI_ErrorTranslate(err));
+    /*
+    if (context->user_context != NULL) {
+    	user_data_t * u = (user_data_t *) (context->user_context);
+    	if (u->io) {
+    		char data[64];
+			size_t len;
+			len = snprintf(data, "ERROR: %ld \"%s\"\r\n", (int32_t) err, SCPI_ErrorTranslate(err), 64);
+			return (netconn_write(u->io, data, len, NETCONN_NOCOPY) == ERR_OK) ? len : 0;
+    	}
+    }
+    */
     if (err != 0) {
         /* New error */
         /* Beep */
@@ -377,7 +388,6 @@ fail1:
  */
 static void scpi_server_thread(void *arg) {
     queue_event_t evt;
-    printf("create server task\n");
 
     (void) arg;
 
@@ -395,17 +405,13 @@ static void scpi_server_thread(void *arg) {
 
     scpi_context.user_context = &user_data;
 
-    printf("init data server...");
     user_data.io_listen = createServer(DEVICE_PORT);
     LWIP_ASSERT("user_data.io_listen != NULL", user_data.io_listen != NULL);
-    printf("Done\ninit ctrl server...");
     user_data.control_io_listen = createServer(CONTROL_PORT);
     LWIP_ASSERT("user_data.control_io_listen != NULL", user_data.control_io_listen != NULL);
-    printf("Done\n");
 
     while (1) {
         waitServer(&user_data, &evt);
-        printf("evt\n");
 
         if (evt.cmd == SCPI_MSG_TIMEOUT) { /* timeout */
             SCPI_Input(&scpi_context, NULL, 0);
@@ -454,7 +460,7 @@ const osThreadAttr_t bonkTask_attributes = {
 
 void scpi_server_init(void) {
 	printf("SCPI server init...");
-	bonkTaskHandle = osThreadNew(BonkTask, NULL, &bonkTask_attributes);
+	// bonkTaskHandle = osThreadNew(BonkTask, NULL, &bonkTask_attributes);
     TaskHandle_t xHandle = NULL;
     // osThreadId_t scpiServerHandle = NULL;
     BaseType_t xReturned;
