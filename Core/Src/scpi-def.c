@@ -64,7 +64,6 @@ extern uint32_t dacValue;
 char txbuf[TXBUFLEN];
 size_t txlen;
 
-
 static scpi_result_t DMM_MeasureVoltageDcQ(scpi_t * context) {
     scpi_number_t param1, param2;
     char bf[15];
@@ -84,13 +83,13 @@ static scpi_result_t DMM_MeasureVoltageDcQ(scpi_t * context) {
     SCPI_NumberToStr(context, scpi_special_numbers_def, &param1, bf, 15);
     // fprintf(stderr, "\tP1=%s\r\n", bf);
     txlen = snprintf(txbuf, TXBUFLEN, "\tP1=%s\r\n", bf);
-    SCPI_ResultCharacters(context, txbuf, txlen);
+    context->interface->write(context, txbuf, txlen);
 
 
     SCPI_NumberToStr(context, scpi_special_numbers_def, &param2, bf, 15);
     // fprintf(stderr, "\tP2=%s\r\n", bf);
     txlen = snprintf(txbuf, TXBUFLEN, "\tP2=%s\r\n", bf);
-    SCPI_ResultCharacters(context, txbuf, txlen);
+    context->interface->write(context, txbuf, txlen);
 
     SCPI_ResultDouble(context, 0);
 
@@ -115,13 +114,13 @@ static scpi_result_t DMM_MeasureVoltageAcQ(scpi_t * context) {
     SCPI_NumberToStr(context, scpi_special_numbers_def, &param1, bf, 15);
     // fprintf(stderr, "\tP1=%s\r\n", bf);
     txlen = snprintf(txbuf, TXBUFLEN, "\tP1=%s\r\n", bf);
-    SCPI_ResultCharacters(context, txbuf, txlen);
+    context->interface->write(context, txbuf, txlen);
 
 
     SCPI_NumberToStr(context, scpi_special_numbers_def, &param2, bf, 15);
     // fprintf(stderr, "\tP2=%s\r\n", bf);
     txlen = snprintf(txbuf, TXBUFLEN, "\tP2=%s\r\n", bf);
-    SCPI_ResultCharacters(context, txbuf, txlen);
+    context->interface->write(context, txbuf, txlen);
 
     SCPI_ResultDouble(context, 0);
 
@@ -145,9 +144,9 @@ static scpi_result_t DMM_ConfigureVoltageDc(scpi_t * context) {
     // fprintf(stderr, "\tP1=%lf\r\n", param1);
     // fprintf(stderr, "\tP2=%lf\r\n", param2);
     txlen = snprintf(txbuf, TXBUFLEN, "\tP1=%lf\r\n", param1);
-	SCPI_ResultCharacters(context, txbuf, txlen);
+	context->interface->write(context, txbuf, txlen);
 	txlen = snprintf(txbuf, TXBUFLEN, "\tP2=%lf\r\n", param2);
-	SCPI_ResultCharacters(context, txbuf, txlen);
+	context->interface->write(context, txbuf, txlen);
 
     return SCPI_RES_OK;
 }
@@ -156,18 +155,15 @@ static scpi_result_t DMM_ConfigureVoltageDc(scpi_t * context) {
 // :TEST:BOOL 0
 static scpi_result_t TEST_Bool(scpi_t * context) {
     scpi_bool_t param1;
-    // fprintf(stderr, "TEST:BOOL\r\n"); /* debug command name */
     txlen = snprintf(txbuf, TXBUFLEN, "TEST:BOOL\r\n");
-    SCPI_ResultCharacters(context, txbuf, txlen);  // write directly to output
+    context->interface->write(context, txbuf, txlen);  // write directly to output
 
     /* read first parameter if present */
     if (!SCPI_ParamBool(context, &param1, TRUE)) {
         return SCPI_RES_ERR;
     }
-
-    txlen = snprintf(txbuf, TXBUFLEN, "\tP1=%d\r\n", param1);
-    SCPI_ResultCharacters(context, txbuf, txlen);
-    // fprintf(stderr, "\tP1=%d\r\n", param1);
+    txlen = snprintf(txbuf, TXBUFLEN, "P1=%d\r\n", param1);
+    context->interface->write(context, txbuf, txlen);
 
     return SCPI_RES_OK;
 }
@@ -180,6 +176,7 @@ scpi_choice_def_t trigger_source[] = {
 };
 
 // :TEST:CHOICE? BUS
+// fails
 static scpi_result_t TEST_ChoiceQ(scpi_t * context) {
     int32_t param;
     const char * name;
@@ -190,8 +187,8 @@ static scpi_result_t TEST_ChoiceQ(scpi_t * context) {
 
     SCPI_ChoiceToName(trigger_source, param, &name);
     // fprintf(stderr, "\tP1=%s (%ld)\r\n", name, (long int) param);
-    txlen = snprintf(txbuf, TXBUFLEN, "\tP1=%s (%ld)\r\n", name, (long int) param);
-    SCPI_ResultCharacters(context, txbuf, txlen);
+    txlen = snprintf(txbuf, TXBUFLEN, "\tP1=%s (%d)\r\n", name, (int) param);
+    context->interface->write(context, txbuf, txlen);
 
     // SCPI_ResultInt32(context, param);
 
@@ -199,6 +196,7 @@ static scpi_result_t TEST_ChoiceQ(scpi_t * context) {
 }
 
 // :TEST4:NUM2
+// fails
 static scpi_result_t TEST_Numbers(scpi_t * context) {
     int32_t numbers[2];
 
@@ -206,7 +204,7 @@ static scpi_result_t TEST_Numbers(scpi_t * context) {
 
     // fprintf(stderr, "TEST numbers %d %d\r\n", numbers[0], numbers[1]);
     txlen = snprintf(txbuf, TXBUFLEN, "TEST numbers %d %d\r\n", (int)numbers[0], (int)numbers[1]);
-    SCPI_ResultCharacters(context, txbuf, txlen);
+    context->interface->write(context, txbuf, txlen);
 
     return SCPI_RES_OK;
 }
@@ -222,7 +220,7 @@ static scpi_result_t TEST_Text(scpi_t * context) {
 
     // fprintf(stderr, "TEXT: ***%s***\r\n", buffer);
     txlen = snprintf(txbuf, TXBUFLEN, "TEXT: ***%s***\r\n", buffer);
-    SCPI_ResultCharacters(context, txbuf, txlen);
+    context->interface->write(context, txbuf, txlen);
 
     return SCPI_RES_OK;
 }
@@ -380,15 +378,15 @@ static scpi_result_t TEST_Chanlst(scpi_t *context) {
         size_t i;
         // fprintf(stderr, "TEST_Chanlst: ");
         txlen = snprintf(txbuf, TXBUFLEN, "TEST_Chanlst: ");
-        SCPI_ResultCharacters(context, txbuf, txlen);
+        context->interface->write(context, txbuf, txlen);
         for (i = 0; i< arr_idx; i++) {
             // fprintf(stderr, "%d!%d, ", array[i].row, array[i].col);
             txlen = snprintf(txbuf, TXBUFLEN, "%d!%d, ", (int)array[i].row, (int)array[i].col);
-            SCPI_ResultCharacters(context, txbuf, txlen);
+            context->interface->write(context, txbuf, txlen);
         }
         // fprintf(stderr, "\r\n");
         txlen = snprintf(txbuf, TXBUFLEN, "\r\n");
-        SCPI_ResultCharacters(context, txbuf, txlen);
+        context->interface->write(context, txbuf, txlen);
     }
     return SCPI_RES_OK;
 }
