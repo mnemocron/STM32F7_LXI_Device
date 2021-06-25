@@ -23,12 +23,8 @@ SUBDIRS := \
 Core/Src \
 Core/Startup \
 Drivers/STM32F7xx_HAL_Driver/Src \
-Drivers/libscpi/src \
-Drivers/lwrb/lwrb \
 LWIP/App \
 LWIP/Target \
-Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src \
-Middlewares/ST/STM32_USB_Device_Library/Core/Src \
 Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 \
 Middlewares/Third_Party/FreeRTOS/Source \
 Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1 \
@@ -42,6 +38,6 @@ Middlewares/Third_Party/LwIP/src/core/ipv6 \
 Middlewares/Third_Party/LwIP/src/netif \
 Middlewares/Third_Party/LwIP/src/netif/ppp \
 Middlewares/Third_Party/LwIP/system/OS \
-USB_DEVICE/App \
-USB_DEVICE/Target \
+Middlewares/libscpi/src \
+Middlewares/lwrb/lwrb \
 

@@ -28,7 +28,7 @@
 #include <string.h>
 
 /* USER CODE BEGIN 0 */
-
+osThreadId_t link_thread = NULL;
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 /* ETH Variables initialization ----------------------------------------------*/
@@ -53,7 +53,56 @@ osThreadAttr_t attributes;
 /* USER CODE END OS_THREAD_ATTR_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN 2 */
+void CUSTOM_LWIP_Init(ip4_addr_t *ipaddr, ip4_addr_t *netmask, ip4_addr_t *gw)
+{
+  /* Terminate any old link threads */
+  osThreadTerminate(link_thread);
+  link_thread = NULL;
+  /* Initilialize the LwIP stack with RTOS */
+  tcpip_init( NULL, NULL );
+  dhcp_stop(&gnetif);
 
+  /* IP addresses initialization with DHCP (IPv4) */
+  //ipaddr.addr = 0;
+  //netmask.addr = 0;
+  //gw.addr = 0;
+
+  /* add the network interface (IPv4/IPv6) with RTOS */
+  netif_remove(&gnetif);
+  netif_add(&gnetif, ipaddr, netmask, gw, NULL, &ethernetif_init, &tcpip_input);
+
+  /* Registers the default network interface */
+  netif_set_default(&gnetif);
+
+  if (netif_is_link_up(&gnetif))
+  {
+	/* When the netif is fully configured this function must be called */
+	netif_set_up(&gnetif);
+  }
+  else
+  {
+	/* When the netif link is down this function must be called */
+	netif_set_down(&gnetif);
+  }
+
+  /* Set the link callback function, this function is called on change of link status*/
+  netif_set_link_callback(&gnetif, ethernetif_update_config);
+
+  /* create a binary semaphore used for informing ethernetif of frame reception */
+  Netif_LinkSemaphore = osSemaphoreNew(1, 1, NULL);
+
+  link_arg.netif = &gnetif;
+  link_arg.semaphore = Netif_LinkSemaphore;
+  /* Create the Ethernet link handler thread */
+/* USER CODE BEGIN OS_THREAD_NEW_CMSIS_RTOS_V2 */
+  memset(&attributes, 0x0, sizeof(osThreadAttr_t));
+  attributes.name = "LinkThr";
+  attributes.stack_size = INTERFACE_THREAD_STACK_SIZE;
+  attributes.priority = osPriorityBelowNormal;
+  link_thread = osThreadNew(ethernetif_set_link, &link_arg, &attributes);
+/* USER CODE END OS_THREAD_NEW_CMSIS_RTOS_V2 */
+
+}
 /* USER CODE END 2 */
 
 /**
@@ -100,7 +149,7 @@ void MX_LWIP_Init(void)
   attributes.name = "LinkThr";
   attributes.stack_size = INTERFACE_THREAD_STACK_SIZE;
   attributes.priority = osPriorityBelowNormal;
-  osThreadNew(ethernetif_set_link, &link_arg, &attributes);
+  link_thread = osThreadNew(ethernetif_set_link, &link_arg, &attributes);
 /* USER CODE END OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
   /* Start DHCP negotiation for a network interface (IPv4) */

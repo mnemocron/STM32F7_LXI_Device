@@ -1,43 +1,36 @@
 /* USER CODE BEGIN Header */
 /**
- ******************************************************************************
- * @file           : main.c
- * @brief          : Main program body
- ******************************************************************************
- * @attention
- *
- * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
- * All rights reserved.</center></h2>
- *
- * This software component is licensed by ST under BSD 3-Clause license,
- * the "License"; You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at:
- *                        opensource.org/licenses/BSD-3-Clause
- *
- ******************************************************************************
- */
+  ******************************************************************************
+  * @file           : main.c
+  * @brief          : Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * All rights reserved.</center></h2>
+  *
+  * This software component is licensed by ST under BSD 3-Clause license,
+  * the "License"; You may not use this file except in compliance with the
+  * License. You may obtain a copy of the License at:
+  *                        opensource.org/licenses/BSD-3-Clause
+  *
+  ******************************************************************************
+  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
 #include "lwip.h"
-#include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-//#include "tcp_echoserver.h"
-// #include "tcp_server_vxi.h"
 #include "scpi/scpi.h"          // SCPI Library
 #include "scpi-def.h"           // SCPI User Code
 #include "lwrb/lwrb.h"
 #include "http_cgi_app.h"
 #include "lwip/apps/httpd.h"
 #include "scpi_server.h"
-#include "tcpecho.h"
-
-// @note MAC ADDRESS    00:80:e1:00:00:00
-// @todo Assertion "HTTP headers not included in file system" failed at line 2372 in ../Middlewares/Third_Party/LwIP/src/apps/http/httpd.c
-
+#include "rpc_server.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,7 +40,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -67,6 +59,7 @@ const osThreadAttr_t defaultTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
+/** @note : Stack Size must be large enough to not cause a stack overflow --> HardFault_Handler() */
 lwrb_t ringbuffer;
 uint8_t uart_rx_buffer_data[128];
 char temp[128];  // to pass UART Rx Ringbuffer to SCPI Input
@@ -77,6 +70,15 @@ uint32_t dacValue;
 extern scpi_interface_t scpi_interface_vxi;
 extern scpi_interface_t scpi_interface_serial;
 extern struct netif gnetif;
+
+uint32_t deviceIPaddr = 0;
+uint32_t newIPaddr = 0;
+uint32_t newGateway = 0;
+uint32_t newNetmask = 0;
+uint8_t deviceDHCPenabled = 0;
+uint8_t newDHCPStatus = 0;
+uint8_t applyNewNetworkSettings = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -124,14 +126,6 @@ int main(void)
   MX_GPIO_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-
-  // initialize httpd server and CGI / SSI Apps
-
-	// tcp_echoserver_init();  // echo Server on Port 23 (Telnet)
-	// tcp_server_vxi_init();  // LXI / VXI11 Server on Port 111
-
-	printf("SwitchBox\n");
-
 	lwrb_init(&ringbuffer, uart_rx_buffer_data, sizeof(uart_rx_buffer_data));
 
 	// initialize SCPI Interface for UART Connection
@@ -142,17 +136,6 @@ int main(void)
 	     	SCPI_IDN1, SCPI_IDN2, SCPI_IDN3, SCPI_IDN4,
 	     	(char*)&scpi_input_buffer_serial, SCPI_INPUT_BUFFER_LENGTH,
 	     	scpi_error_queue_data_serial, SCPI_ERROR_QUEUE_SIZE);
-
-	// initialize SCPI Interface for TCP/IP Connection
-	/*
-	SCPI_Init(&scpi_context_vxi,
-		     	scpi_commands,
-		     	&scpi_interface_vxi,
-		     	scpi_units_def,
-		     	SCPI_IDN1, SCPI_IDN2, SCPI_IDN3, SCPI_IDN4,
-		     	(char*)&scpi_input_buffer_vxi, SCPI_INPUT_BUFFER_LENGTH,
-		     	scpi_error_queue_data_vxi, SCPI_ERROR_QUEUE_SIZE);
-	 */
 
 	__HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);  // must be enabled again
 	// __HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE);  // @Bug : gets stuck in TIM1 interrupt. Priority issue because of systick?
@@ -179,6 +162,7 @@ int main(void)
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   scpi_server_init();
+  rpc_server_init();
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -199,12 +183,12 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	while (1) {
+  while (1)
+  {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-	}
+  }
   /* USER CODE END 3 */
 }
 
@@ -224,7 +208,7 @@ void SystemClock_Config(void)
   /** Configure the main internal regulator output voltage
   */
   __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
@@ -233,16 +217,10 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 216;
+  RCC_OscInitStruct.PLL.PLLN = 72;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 9;
+  RCC_OscInitStruct.PLL.PLLQ = 3;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Activate the Over-Drive mode
-  */
-  if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
     Error_Handler();
   }
@@ -252,16 +230,15 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART3|RCC_PERIPHCLK_CLK48;
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART3;
   PeriphClkInitStruct.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
-  PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48SOURCE_PLL;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -352,6 +329,20 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(USB_OverCurrent_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : USB_SOF_Pin USB_ID_Pin USB_DM_Pin USB_DP_Pin */
+  GPIO_InitStruct.Pin = USB_SOF_Pin|USB_ID_Pin|USB_DM_Pin|USB_DP_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF10_OTG_FS;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : USB_VBUS_Pin */
+  GPIO_InitStruct.Pin = USB_VBUS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(USB_VBUS_GPIO_Port, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 4 */
@@ -381,38 +372,58 @@ void StartDefaultTask(void *argument)
 {
   /* init code for LWIP */
   MX_LWIP_Init();
-
-  /* init code for USB_DEVICE */
-  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 5 */
+  deviceDHCPenabled = 1;
   uint8_t ipAddressPrinted = FALSE;
-
+  httpd_init();
+  myCGIinit();
+  mySSIinit();
   /* Infinite loop */
   for(;;)
   {
-    // osDelay(1);
-    // MX_LWIP_Process();  // not required
+	  // osDelay(1);
+	    // MX_LWIP_Process();  // not required
+	  /** @bug custom init does not work */
+	  if(applyNewNetworkSettings){
+		  applyNewNetworkSettings = 0;
+		  ipAddressPrinted = 0;
+		  if(newDHCPStatus){
+			  deviceDHCPenabled = 1;
+			  MX_LWIP_Init();
+			  printf("Init DHCP On\n");
+		  } else {
+			  deviceDHCPenabled = 0;
+			  ip4_addr_t ipaddr;
+			  ip4_addr_t netmask;
+			  ip4_addr_t gateway;
+			  ipaddr.addr = newIPaddr;
+			  netmask.addr = newNetmask;
+			  gateway.addr = newGateway;
+			  CUSTOM_LWIP_Init(&ipaddr, &netmask, &gateway);
+			  printf("Init DHCP Off\n");
+		  }
+	  }
 
-	if (!ipAddressPrinted) {
-		if (!ip4_addr_isany(netif_ip4_addr(&gnetif))) {
-			uint32_t local_IP = ip4_addr_get_u32(netif_ip4_addr(&gnetif));
-			printf("IP %d.%d.%d.%d\n", (int)(local_IP & 0xff),
-					(int)((local_IP >> 8) & 0xff),
-					(int)((local_IP >> 16) & 0xff),
-					(int)(local_IP >> 24));
-			ipAddressPrinted = TRUE;
+		if (!ipAddressPrinted) {
+			if (!ip4_addr_isany(netif_ip4_addr(&gnetif))) {
+				deviceIPaddr = ip4_addr_get_u32(netif_ip4_addr(&gnetif));
+				printf("IP %d.%d.%d.%d\n", (int)(deviceIPaddr & 0xff),
+						(int)((deviceIPaddr >> 8) & 0xff),
+						(int)((deviceIPaddr >> 16) & 0xff),
+						(int)(deviceIPaddr >> 24));
+				ipAddressPrinted = TRUE;
+			}
 		}
-	}
 
-	// Feed UART Rx data to SCPI_Input when UART Line goes IDLE (IT)
-	if(flag_interpret_scpi){
-		flag_interpret_scpi = FALSE;
-		/** @todo : does this work without the temp buffer ? */
-		uint8_t len = lwrb_get_full(&ringbuffer);
-		lwrb_read(&ringbuffer, temp, len);
-		SCPI_Input(&scpi_context_serial, temp, len);
-	}
-  }
+		// Feed UART Rx data to SCPI_Input when UART Line goes IDLE (IT)
+		if(flag_interpret_scpi){
+			flag_interpret_scpi = FALSE;
+			/** @todo : does this work without the temp buffer ? */
+			uint8_t len = lwrb_get_full(&ringbuffer);
+			lwrb_read(&ringbuffer, temp, len);
+			SCPI_Input(&scpi_context_serial, temp, len);
+		}
+	  }
   /* USER CODE END 5 */
 }
 
@@ -444,10 +455,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-	/* User can add his own implementation to report the HAL error return state */
-	__disable_irq();
-	while (1) {
-	}
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  }
   /* USER CODE END Error_Handler_Debug */
 }
 

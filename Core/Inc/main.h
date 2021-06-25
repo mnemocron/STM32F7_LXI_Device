@@ -111,13 +111,6 @@ void Error_Handler(void);
 #define LD2_Pin GPIO_PIN_7
 #define LD2_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-/** @note https://www.lxistandard.org/About/LXI-Protocols.aspx */
-#define TCP_PORT_SCPI_RAW    5025
-#define TCP_PORT_SCPI_TELNET 5024
-#define TCP_PORT_TELNET      23
-#define TCP_PORT_VXI11       111
-#define TCP_PORT_HISLIP      4880
-
 /**
  *  @see https://github.com/STMicroelectronics/STM32CubeF4/blob/master/Projects/STM32F401RE-Nucleo/Examples/UART/UART_Printf/Src/main.c
  */

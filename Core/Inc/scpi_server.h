@@ -34,9 +34,5 @@
 
 void scpi_server_init(void);
 
-void SCPI_AddError(int16_t err);
-void SCPI_RequestControl(void);
-
-void BonkTask(void *argument);
 
 #endif /* _SCPI_SERVER_H_ */

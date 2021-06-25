@@ -1,3 +1,15 @@
+/*******************************************************************************
+  * @file    scpi-def.c
+  * @brief   contains user settings and definitions for SCPI command implementation
+  * @details This file implements constants, math and hardware specific
+             functionalities
+  * @version 1.0
+  * @author  Simon Burkhardt
+  * @date    2020-07-13
+  * @copyright
+  * @see https://github.com/j123b567/scpi-parser/blob/master/examples/common/scpi-def.c
+********************************************************************************
+*/
 /*-
  * BSD 2-Clause License
  *
@@ -25,19 +37,6 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-	
-/*******************************************************************************
-  * @file    scpi-def.c
-  * @brief   contains user settings and definitions for SCPI command implementation
-  * @details This file implements constants, math and hardware specific 
-             functionalities
-  * @version 1.0
-  * @author  Simon Burkhardt
-  * @date    2020-07-13
-  * @copyright
-  * @see https://github.com/j123b567/scpi-parser/blob/master/examples/common/scpi-def.c
-********************************************************************************
-*/
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
@@ -45,6 +44,7 @@
 #include <string.h>
 #include "scpi/scpi.h"
 #include "scpi-def.h"
+#include "lwip.h"
 
 /* USER CODE END Includes */
 
@@ -58,6 +58,16 @@
 /* USER CODE BEGIN EV */
 
 extern uint32_t dacValue;
+extern struct netif gnetif;
+
+extern uint32_t deviceIPaddr;
+extern uint32_t newIPaddr;
+extern uint32_t newGateway;
+extern uint32_t newNetmask;
+extern uint8_t deviceDHCPenabled;
+extern uint8_t newDHCPStatus;
+extern uint8_t applyNewNetworkSettings;
+
 /* USER CODE END EV */
 
 #define TXBUFLEN 128
@@ -78,7 +88,6 @@ static scpi_result_t DMM_MeasureVoltageDcQ(scpi_t * context) {
     if (!SCPI_ParamNumber(context, scpi_special_numbers_def, &param2, FALSE)) {
         /* do something, if parameter not present */
     }
-
 
     SCPI_NumberToStr(context, scpi_special_numbers_def, &param1, bf, 15);
     // fprintf(stderr, "\tP1=%s\r\n", bf);
@@ -391,6 +400,138 @@ static scpi_result_t TEST_Chanlst(scpi_t *context) {
     return SCPI_RES_OK;
 }
 
+static void scpi_write_ip_address(scpi_t * context, uint32_t addr){
+	txlen = SCPI_Int32ToStr((int)(addr & 0xff), txbuf, 4);
+	txbuf[txlen++] = '.';
+	context->interface->write(context, txbuf, txlen);
+
+	txlen = SCPI_Int32ToStr((int)((addr >> 8) & 0xff), txbuf, 4);
+	txbuf[txlen++] = '.';
+	context->interface->write(context, txbuf, txlen);
+
+	txlen = SCPI_Int32ToStr((int)((addr >> 16) & 0xff), txbuf, 4);
+	txbuf[txlen++] = '.';
+	context->interface->write(context, txbuf, txlen);
+
+	txlen = SCPI_Int32ToStr((int)((addr >> 24) & 0xff), txbuf, 4);
+	txbuf[txlen++] = '\r';
+	txbuf[txlen++] = '\n';
+	context->interface->write(context, txbuf, txlen);
+}
+
+static scpi_result_t SYST_Comm_TcpIp_Ip(scpi_t * context) {
+	char buffer[100];
+	size_t copy_len;
+
+	if (!SCPI_ParamCopyText(context, buffer, sizeof (buffer), &copy_len, FALSE)) {
+		buffer[0] = '\0';
+	}
+
+	if(copy_len > (4*3 +3 +2)){ // "xxx.xxx.xxx.xxx\0"
+		return SCPI_RES_ERR;
+	}
+	ip4_addr_t ipaddr;
+	if(! ip4addr_aton(buffer, &ipaddr)){
+		return SCPI_RES_ERR;
+	}
+	if(! ip4_addr_isany(&ipaddr)){
+		return SCPI_RES_ERR;
+	}
+	newIPaddr = ipaddr.addr;
+	scpi_write_ip_address(context, (uint32_t)ipaddr.addr);
+    return SCPI_RES_OK;
+}
+
+static scpi_result_t SYST_Comm_TcpIp_IpQ(scpi_t * context) {
+	uint32_t ipaddr = ip4_addr_get_u32(netif_ip4_addr(&gnetif));
+	scpi_write_ip_address(context, ipaddr);
+    return SCPI_RES_OK;
+}
+
+static scpi_result_t SYST_Comm_TcpIp_Mask(scpi_t * context) {
+	char buffer[100];
+	size_t copy_len;
+
+	if (!SCPI_ParamCopyText(context, buffer, sizeof (buffer), &copy_len, FALSE)) {
+		buffer[0] = '\0';
+	}
+
+	if(copy_len > (4*3 +3 +2)){ // "xxx.xxx.xxx.xxx\0"
+		return SCPI_RES_ERR;
+	}
+	ip4_addr_t ipaddr;
+	if(! ip4addr_aton(buffer, &ipaddr)){
+		return SCPI_RES_ERR;
+	}
+	if(! ip4_addr_netmask_valid(&ipaddr)){
+		return SCPI_RES_ERR;
+	}
+	newNetmask = ipaddr.addr;
+	scpi_write_ip_address(context, (uint32_t)ipaddr.addr);
+    return SCPI_RES_OK;
+}
+
+static scpi_result_t SYST_Comm_TcpIp_MaskQ(scpi_t * context) {
+	uint32_t ipaddr = ip4_addr_get_u32(netif_ip4_netmask(&gnetif));
+	scpi_write_ip_address(context, ipaddr);
+    return SCPI_RES_OK;
+}
+
+static scpi_result_t SYST_Comm_TcpIp_Gw(scpi_t * context) {
+	char buffer[100];
+	size_t copy_len;
+
+	if (!SCPI_ParamCopyText(context, buffer, sizeof (buffer), &copy_len, FALSE)) {
+		buffer[0] = '\0';
+	}
+
+	if(copy_len > (4*3 +3 +2)){ // "xxx.xxx.xxx.xxx\0"
+		return SCPI_RES_ERR;
+	}
+	ip4_addr_t ipaddr;
+	if(! ip4addr_aton(buffer, &ipaddr)){
+		return SCPI_RES_ERR;
+	}
+	if(! ip4_addr_isany(&ipaddr)){
+		return SCPI_RES_ERR;
+	}
+	newGateway = ipaddr.addr;
+	scpi_write_ip_address(context, (uint32_t)ipaddr.addr);
+    return SCPI_RES_OK;
+}
+
+static scpi_result_t SYST_Comm_TcpIp_GwQ(scpi_t * context) {
+	uint32_t ipaddr = ip4_addr_get_u32(netif_ip4_gw(&gnetif));
+	scpi_write_ip_address(context, ipaddr);
+    return SCPI_RES_OK;
+}
+
+static scpi_result_t SYST_Comm_TcpIp_Dhcp(scpi_t * context) {
+    scpi_bool_t param1;
+    /* read first parameter if present */
+    if (!SCPI_ParamBool(context, &param1, TRUE)) {
+        return SCPI_RES_ERR;
+    }
+    if(param1 != deviceDHCPenabled){
+    	newDHCPStatus = param1;
+    	applyNewNetworkSettings = 1;
+        txlen = snprintf(txbuf, TXBUFLEN, "New DHCP=%d\r\n", param1);
+        context->interface->write(context, txbuf, txlen);
+    }
+
+    return SCPI_RES_OK;
+}
+
+static scpi_result_t SYST_Comm_TcpIp_DhcpQ(scpi_t * context) {
+
+    txlen = SCPI_Int32ToStr(deviceDHCPenabled, txbuf, 4);
+	txbuf[txlen++] = '\r';
+	txbuf[txlen++] = '\n';
+    context->interface->write(context, txbuf, txlen);
+
+    return SCPI_RES_OK;
+}
+
 /**
  * Reimplement IEEE488.2 *TST?
  *
@@ -460,6 +601,15 @@ const scpi_command_t scpi_commands[] = {
     {.pattern = "TEST:TEXT", .callback = TEST_Text,},
     {.pattern = "TEST:ARBitrary?", .callback = TEST_ArbQ,},
     {.pattern = "TEST:CHANnellist", .callback = TEST_Chanlst,},
+
+    {.pattern = "SYSTem:COMMunication:TCPIP:IP", .callback = SYST_Comm_TcpIp_Ip,},
+    {.pattern = "SYSTem:COMMunication:TCPIP:IP?", .callback = SYST_Comm_TcpIp_IpQ,},
+    {.pattern = "SYSTem:COMMunication:TCPIP:MASK", .callback = SYST_Comm_TcpIp_Mask,},
+    {.pattern = "SYSTem:COMMunication:TCPIP:MASK?", .callback = SYST_Comm_TcpIp_MaskQ,},
+    {.pattern = "SYSTem:COMMunication:TCPIP:GATEway", .callback = SYST_Comm_TcpIp_Gw,},
+    {.pattern = "SYSTem:COMMunication:TCPIP:GATEway?", .callback = SYST_Comm_TcpIp_GwQ,},
+    {.pattern = "SYSTem:COMMunication:TCPIP:DHCP", .callback = SYST_Comm_TcpIp_Dhcp,},
+    {.pattern = "SYSTem:COMMunication:TCPIP:DHCP?", .callback = SYST_Comm_TcpIp_DhcpQ,},
 
     SCPI_CMD_LIST_END
 };

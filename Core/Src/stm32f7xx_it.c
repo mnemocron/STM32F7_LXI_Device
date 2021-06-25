@@ -60,7 +60,6 @@ char rx;
 
 /* External variables --------------------------------------------------------*/
 extern ETH_HandleTypeDef heth;
-extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern UART_HandleTypeDef huart3;
 extern TIM_HandleTypeDef htim1;
 
@@ -94,7 +93,6 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-
 
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
@@ -206,6 +204,7 @@ void USART3_IRQHandler(void)
 		flag_interpret_scpi = 1;
 	}
 
+
   /* USER CODE END USART3_IRQn 0 */
   HAL_UART_IRQHandler(&huart3);
   /* USER CODE BEGIN USART3_IRQn 1 */
@@ -226,20 +225,6 @@ void ETH_IRQHandler(void)
   /* USER CODE BEGIN ETH_IRQn 1 */
 
   /* USER CODE END ETH_IRQn 1 */
-}
-
-/**
-  * @brief This function handles USB On The Go FS global interrupt.
-  */
-void OTG_FS_IRQHandler(void)
-{
-  /* USER CODE BEGIN OTG_FS_IRQn 0 */
-
-  /* USER CODE END OTG_FS_IRQn 0 */
-  HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
-  /* USER CODE BEGIN OTG_FS_IRQn 1 */
-
-  /* USER CODE END OTG_FS_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

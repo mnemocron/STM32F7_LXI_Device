@@ -40,7 +40,7 @@
 #endif /* WITH_RTOS */
 
 /* USER CODE BEGIN 0 */
-
+void CUSTOM_LWIP_Init(ip4_addr_t*, ip4_addr_t*, ip4_addr_t*);
 /* USER CODE END 0 */
 
 /* Global Variables ----------------------------------------------------------*/
@@ -57,7 +57,6 @@ void MX_LWIP_Init(void);
  *   - Handle timeouts if NO_SYS_NO_TIMERS not set
  */
 void MX_LWIP_Process(void);
-
 /* USER CODE END 1 */
 #endif /* WITH_RTOS */
 

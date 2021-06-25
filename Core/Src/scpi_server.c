@@ -324,6 +324,7 @@ static int processIo(user_data_t * user_data) {
 
     if (buflen > 0) {
         SCPI_Input(&scpi_context, buf, buflen);
+        printf("%.*s\n", buflen, buf);
     } else {
         /* goto fail2; */
     }

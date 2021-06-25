@@ -1,3 +1,14 @@
+/*******************************************************************************
+  * @file   scpi-def.h
+  * @date   2020-07-13
+  * @author
+  * @author Simon Burkhardt
+  * @brief  contains user settings and definitions for SCPI command implementation
+  * @see    https://github.com/j123b567/scpi-parser/blob/master/examples/common/scpi-def.h
+  * @see https://github.com/j123b567/scpi-parser/blob/master/examples/common/scpi-def.c
+********************************************************************************
+*/
+
 /*-
  * BSD 2-Clause License
  *
@@ -25,15 +36,6 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/**
-  * @file   scpi-def.h
-  * @date   2020-07-13
-  * @author
-  * @author Simon Burkhardt
-  * @brief  contains user settings and definitions for SCPI command implementation
-  * @see    https://github.com/j123b567/scpi-parser/blob/master/examples/common/scpi-def.h
-  */
 
 #ifndef __SCPI_DEF_H_
 #define __SCPI_DEF_H_
