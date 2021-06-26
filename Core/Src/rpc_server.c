@@ -65,6 +65,7 @@
 udp_recv_fn udp_echo_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port)
 {
 	if (p != NULL) {
+		printf("[LXI discovery request received]\n");
 		// build a reply package
 		// rfc8167 - The XID of a Reply always matches that of the initiating Call.
 		char msg[28];
@@ -82,9 +83,7 @@ udp_recv_fn udp_echo_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct
 		struct pbuf *p;
 		p = pbuf_alloc(PBUF_TRANSPORT, 28*sizeof(char), PBUF_RAM);
 		memcpy(p->payload, msg, sizeof(msg));
-		ip_addr_t dest;
-		dest = *ip4_current_src_addr();
-		udp_sendto(pcb, p, &dest, pcb->remote_port); // reply to source IP + port
+		udp_sendto(pcb, p, ip4_current_src_addr(), port); // reply to source IP + port
 		pbuf_free(p); //De-allocate packet buffer
 	}
 }

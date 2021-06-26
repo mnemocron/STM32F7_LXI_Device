@@ -155,6 +155,7 @@ static const default_filename httpd_default_filenames[] = {
   {"/index.shtml", 1 },
   {"/index.ssi",   1 },
   {"/index.shtm",  1 },
+  {"/index.xml",   1 },
   {"/index.html",  0 },
   {"/index.htm",   0 }
 };

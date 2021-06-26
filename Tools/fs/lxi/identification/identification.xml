@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LXIDevice xmlns="http://www.lxistandard.org/InstrumentIdentification/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.lxistandard.org/InstrumentIdentification/1.0 LXIIdentification.xsd">
+    <Manufacturer>My Company, Inc.</Manufacturer>
+    <Model>EX1234</Model>
+    <SerialNumber>543210</SerialNumber>
+    <FirmwareRevision>1.2.3a</FirmwareRevision>
+    <ManufacturerDescription>Sample Device</ManufacturerDescription>
+    <HomepageURL>http://www.mycompany.com</HomepageURL>
+    <DriverURL>http://www.mycompany.com</DriverURL>
+    <ConnectedDevices>
+        <DeviceURI>http://sampledevice.local/devices/device0/</DeviceURI>
+    </ConnectedDevices>
+    <UserDescription>Demo of Identification Schema</UserDescription>
+    <IdentificationURL>http://sampledevice.local/lxi/identification</IdentificationURL>
+    <Interface xsi:type="NetworkInformation" InterfaceType="LXI" IPType="IPv4" InterfaceName="eth0">
+        <InstrumentAddressString>TCPIP::192.168.1.179::INSTR</InstrumentAddressString>
+        <InstrumentAddressString>TCPIP::192.168.1.179::5025::SOCKET</InstrumentAddressString>
+        <InstrumentAddressString>TCPIP::192.168.1.179::hislip0::INSTR</InstrumentAddressString>
+        <Hostname>192.168.1.179</Hostname>
+        <IPAddress>192.168.1.179</IPAddress>
+        <SubnetMask>255.255.255.0</SubnetMask>
+        <MACAddress>00:3F:F8:6A:1A:3A</MACAddress>
+        <Gateway>192.168.1.7</Gateway>
+        <DHCPEnabled>true</DHCPEnabled>
+        <AutoIPEnabled>false</AutoIPEnabled>
+    </Interface>
+    <Interface InterfaceType="MyCompanyCustomNetworkInterface" InterfaceName="MyCompany1">
+        <InstrumentAddressString>192.168.1.179:5025</InstrumentAddressString>
+    </Interface>
+    <IVISoftwareModuleName>Thingamajig</IVISoftwareModuleName>
+    <Extension>
+        <SampleExtension>Arbitrary Vendor Extension Data can go here.</SampleExtension>
+    </Extension>
+    <Domain>1</Domain>
+    <LXIVersion>1.4</LXIVersion>
+    <LXIExtendedFunctions>
+        <Function FunctionName="LXI Wired Trigger Bus" Version="1.0" />
+        <Function FunctionName="LXI Event Messaging" Version="1.0" />
+        <Function FunctionName="LXI Clock Synchronization" Version="1.0" />
+        <Function FunctionName="LXI Timestamped Data" Version="1.0" />
+        <Function FunctionName="LXI Event Logs" Version="1.0" />
+        <Function FunctionName="LXI HiSLIP" Version="1.0">
+            <Port>4880</Port>
+        </Function>
+    </LXIExtendedFunctions>
+</LXIDevice>
