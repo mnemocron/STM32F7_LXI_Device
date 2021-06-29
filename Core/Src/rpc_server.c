@@ -76,6 +76,7 @@ udp_recv_fn udp_echo_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct
 		for(int i=4; i<28; i++){
 			msg[i] = 0;
 		}
+		/** @todo what is the correct reply? should this be 618 as by Rigol? */
 		msg[7] = 1;  // message type = Reply
 		msg[26] = 0x13; // Port 5025
 		msg[27] = 0xa1;

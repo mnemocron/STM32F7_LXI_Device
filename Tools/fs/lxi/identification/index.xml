@@ -2,30 +2,27 @@
 <LXIDevice xmlns="http://www.lxistandard.org/InstrumentIdentification/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.lxistandard.org/InstrumentIdentification/1.0 LXIIdentification.xsd">
     <Manufacturer>eta Systems</Manufacturer>
     <Model>EX1234</Model>
-    <SerialNumber><!--lxi1--></SerialNumber>
-    <FirmwareRevision>1.2.3a</FirmwareRevision>
+    <SerialNumber><!--#lxi0--></SerialNumber>
+    <FirmwareRevision><!--#lxi1--></FirmwareRevision>
     <ManufacturerDescription>Sample Device</ManufacturerDescription>
-    <HomepageURL>http://www.mycompany.com</HomepageURL>
-    <DriverURL>http://www.mycompany.com</DriverURL>
-    <ConnectedDevices>
-        <DeviceURI>http://sampledevice.local/devices/device0/</DeviceURI>
-    </ConnectedDevices>
+    <HomepageURL>https://github.com/eta-systems</HomepageURL>
+    <DriverURL>https://github.com/eta-systems</DriverURL>
     <UserDescription>Demo of Identification Schema</UserDescription>
-    <IdentificationURL>http://sampledevice.local/lxi/identification</IdentificationURL>
+    <IdentificationURL><!--#lxi2-->/lxi/identification</IdentificationURL>
     <Interface xsi:type="NetworkInformation" InterfaceType="LXI" IPType="IPv4" InterfaceName="eth0">
-        <InstrumentAddressString>TCPIP::192.168.1.179::INSTR</InstrumentAddressString>
-        <InstrumentAddressString>TCPIP::192.168.1.179::5025::SOCKET</InstrumentAddressString>
-        <InstrumentAddressString>TCPIP::192.168.1.179::hislip0::INSTR</InstrumentAddressString>
-        <Hostname>192.168.1.179</Hostname>
-        <IPAddress>192.168.1.179</IPAddress>
-        <SubnetMask>255.255.255.0</SubnetMask>
-        <MACAddress>00:3F:F8:6A:1A:3A</MACAddress>
-        <Gateway>192.168.1.7</Gateway>
-        <DHCPEnabled>true</DHCPEnabled>
-        <AutoIPEnabled>false</AutoIPEnabled>
+        <InstrumentAddressString><!--#lxi3-->::INSTR</InstrumentAddressString>
+        <InstrumentAddressString><!--#lxi3-->::5025::SOCKET</InstrumentAddressString>
+        <InstrumentAddressString><!--#lxi3-->::hislip0::INSTR</InstrumentAddressString>
+        <Hostname><!--#lxi2--></Hostname>
+        <IPAddress><!--#lxi2--></IPAddress>
+        <SubnetMask><!--#lxi4--></SubnetMask>
+        <MACAddress><!--#lxi5--></MACAddress>
+        <Gateway><!--#lxi6--></Gateway>
+        <DHCPEnabled><!--#lxi7--></DHCPEnabled>
+        <AutoIPEnabled><!--#lxi8--></AutoIPEnabled>
     </Interface>
     <Interface InterfaceType="MyCompanyCustomNetworkInterface" InterfaceName="MyCompany1">
-        <InstrumentAddressString>192.168.1.179:5025</InstrumentAddressString>
+        <InstrumentAddressString><!--#lxi9-->::5025</InstrumentAddressString>
     </Interface>
     <IVISoftwareModuleName>unknown</IVISoftwareModuleName>
     <Extension>

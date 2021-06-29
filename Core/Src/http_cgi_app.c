@@ -3,6 +3,9 @@
  *
  *  Created on: Mar 24, 2021
  *      Author: simon
+ *
+ *
+ *      https://github.com/JoeMerten/Stm32-Tools-Evaluation/tree/master/STM32Cube_FW_F4_V1.9.0/Projects/STM324xG_EVAL/Applications/LwIP/LwIP_HTTP_Server_Raw/Src
  */
 
 #include "http_cgi_app.h"
@@ -12,22 +15,14 @@ tCGI theCGItable[1];
 bool LD1ON = false; // this variable will indicate if the LD3 LED on the board is ON or not
 bool LD2ON = false; // this variable will indicate if our LD2 LED on the board is ON or not
 
-
-
 char const *theSSItags[numSSItags] = { "tag1", "tag2" };
+char const *theLXItags[numLXItags] = { "lxi0", "lxi1", "lxi2", "lxi3", "lxi4", "lxi5", "lxi6", "lxi7", "lxi8", "lxi9" };
+
 const tCGI LedCGI = { "/app.cgi", LedCGIhandler };
 
 const char* LedCGIhandler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]) {
 	uint32_t i = 0;
-	if (iIndex == 0) {
-		//turning the LED lights off
-		HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-		// we put this variable to false to indicate that the LD2 LED on the board is not ON
-		LD2ON = false;
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-		// we put this variable to false to indicate that the LD* LED on the board is not ON
-		LD1ON = false;
-	}
+
 	for (i = 0; i < iNumParams; i++) {
 		if (strcmp(pcParam[i], "p") == 0)
 		{
@@ -47,15 +42,15 @@ const char* LedCGIhandler(int iIndex, int iNumParams, char *pcParam[], char *pcV
 	return "/index.shtml";
 }
 
-// function to initialize CGI [= CGI #6 =]
+// function to initialize CGI
 void myCGIinit(void) {
 	//add LED control CGI to the table
 	theCGItable[0] = LedCGI;
 	//give the table to the HTTP server
 	http_set_cgi_handlers(theCGItable, 1);
-} // END [= CGI #6 =]
+}
 
-uint16_t mySSIHandler(int iIndex, char *pcInsert, int iInsertLen) {
+uint16_t defaultSSIHandler(int iIndex, char *pcInsert, int iInsertLen) {
 	if (iIndex == 0) {
 		if (LD1ON == false) {
 			char myStr1[] = "<input id=\"ck1\" value=\"1\" name=\"p\" type=\"checkbox\">";
@@ -84,8 +79,76 @@ uint16_t mySSIHandler(int iIndex, char *pcInsert, int iInsertLen) {
 	return 0;
 }
 
+uint16_t lxiSSIHandler(int iIndex, char *pcInsert, int iInsertLen) {
+	if(iIndex == 0){
+		// Serial Number
+		char myStr[] = "S/N.12345";
+		strcpy(pcInsert, myStr);
+		return strlen(myStr);
+	} else if(iIndex == 1) {
+		// Firmware Version
+		char myStr[] = "V1.0.0";
+		strcpy(pcInsert, myStr);
+		return strlen(myStr);
+	} else if(iIndex == 2){
+		// IP Address
+		char myStr[] = "192.168.1.179";
+		strcpy(pcInsert, myStr);
+		return strlen(myStr);
+	} else if(iIndex == 3){
+		// INSTR::IP_ADDRESS
+		char myStr[] = "INSTR::192.168.1.179";
+		strcpy(pcInsert, myStr);
+		return strlen(myStr);
+	} else if (iIndex == 4){
+		// Subnet Mask
+		char myStr[] = "255.255.255.0";
+		strcpy(pcInsert, myStr);
+		return strlen(myStr);
+	} else if (iIndex == 5){
+		// Physical MAC Address
+		char myStr[] = "00:00:00:00:00:00";
+		strcpy(pcInsert, myStr);
+		return strlen(myStr);
+	} else if(iIndex == 6){
+		// Gateway Address
+		char myStr[] = "192.168.1.1";
+		strcpy(pcInsert, myStr);
+		return strlen(myStr);
+	} else if(iIndex == 7){
+		// DHCP enabled
+		char myStr[] = "true";
+		strcpy(pcInsert, myStr);
+		return strlen(myStr);
+	} else if(iIndex == 8){
+		// Auto IP enabled
+		char myStr[] = "false";
+		strcpy(pcInsert, myStr);
+		return strlen(myStr);
+	} else if(iIndex == 9){
+		// Instrument Address String
+		char myStr[] = "INSTR::192.168.1.179";
+		strcpy(pcInsert, myStr);
+		return strlen(myStr);
+	} else {
+		// empty
+		char myStr[] = "-";
+		strcpy(pcInsert, myStr);
+		return strlen(myStr);
+	}
+	return 0;
+}
+
 void mySSIinit(void) {
-	http_set_ssi_handler(mySSIHandler, (char const**) theSSItags, numSSItags);
+	// ./index.html page
+	//http_set_ssi_handler(defaultSSIHandler, (char const**) theSSItags, numSSItags);
+	// ./lxi/identification page
+	http_set_ssi_handler(lxiSSIHandler, (char const**) theLXItags, numLXItags);
+
+	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+	LD2ON = false;
+	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+	LD1ON = false;
 }
 
 
