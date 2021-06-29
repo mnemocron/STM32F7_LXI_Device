@@ -2192,9 +2192,12 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
   /* Have we been asked for the default file (in root or a directory) ? */
 #if LWIP_HTTPD_MAX_REQUEST_URI_LEN
   size_t uri_len = strlen(uri);
-  if ((uri_len > 0) && (uri[uri_len - 1] == '/') &&
+  // http://hostname/lxi/identification
+  if ((uri_len > 0) && ( (uri[uri_len - 1] == '/') || ( uri[uri_len-3]=='i' && uri[uri_len-2]=='o' && uri[uri_len-1]=='n' ) ) &&
       ((uri != http_uri_buf) || (uri_len == 1))) {
-    size_t copy_len = LWIP_MIN(sizeof(http_uri_buf) - 1, uri_len - 1);
+	size_t copy_len = LWIP_MIN(sizeof(http_uri_buf) - 1, uri_len - 1);
+	if(uri[uri_len-1]!='/')
+	  copy_len++;  // also include the last character for URIs missing the '/'
     if (copy_len > 0) {
       MEMCPY(http_uri_buf, uri, copy_len);
       http_uri_buf[copy_len] = 0;
@@ -2208,7 +2211,7 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
       const char *file_name;
 #if LWIP_HTTPD_MAX_REQUEST_URI_LEN
       if (copy_len > 0) {
-        size_t len_left = sizeof(http_uri_buf) - copy_len - 1;
+    	size_t len_left = sizeof(http_uri_buf) - copy_len;
         if (len_left > 0) {
           size_t name_len = strlen(httpd_default_filenames[loop].name);
           size_t name_copy_len = LWIP_MIN(len_left, name_len);

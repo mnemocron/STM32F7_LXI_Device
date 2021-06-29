@@ -36,8 +36,8 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
     + Assertion "no packet queues allowed!" failed at line 1009 in ../Middlewares/Third_Party/LwIP/src/core/ipv4/etharp.c
 - implement clear MVC structure for SCPI commands
 - make dynamic version of `/lxi/identification.xml` with appropriate SSI implementation (not possible because of file extension?) https://www.nongnu.org/lwip/2_0_x/group__httpd.html
-    + this requries a hack inside the httpd.c code to add "xml" as supported SSI file
-- UDP/RPC/Portmap implementation of VXI-11 discovery broadcast reply
+    + this requries a hack inside the httpd.c code to add "xml" as supported SSI file --> working now
+    + SSI / CGI information still missing
 
 
 
@@ -87,8 +87,12 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
     + initialization for DHCP
     + initialization with static IP
 
+#### Webserver
 
+##### SSI CGI
 
+`#define LWIP_HTTPD_MAX_TAG_NAME_LEN 8`
+#define LWIP_HTTPD_MAX_TAG_INSERT_LEN 192
 
 
 

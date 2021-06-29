@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <LXIDevice xmlns="http://www.lxistandard.org/InstrumentIdentification/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.lxistandard.org/InstrumentIdentification/1.0 LXIIdentification.xsd">
-    <Manufacturer>My Company, Inc.</Manufacturer>
+    <Manufacturer>eta Systems</Manufacturer>
     <Model>EX1234</Model>
-    <SerialNumber>543210</SerialNumber>
+    <SerialNumber><!--lxi1--></SerialNumber>
     <FirmwareRevision>1.2.3a</FirmwareRevision>
     <ManufacturerDescription>Sample Device</ManufacturerDescription>
     <HomepageURL>http://www.mycompany.com</HomepageURL>
@@ -27,7 +27,7 @@
     <Interface InterfaceType="MyCompanyCustomNetworkInterface" InterfaceName="MyCompany1">
         <InstrumentAddressString>192.168.1.179:5025</InstrumentAddressString>
     </Interface>
-    <IVISoftwareModuleName>Thingamajig</IVISoftwareModuleName>
+    <IVISoftwareModuleName>unknown</IVISoftwareModuleName>
     <Extension>
         <SampleExtension>Arbitrary Vendor Extension Data can go here.</SampleExtension>
     </Extension>
