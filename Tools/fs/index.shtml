@@ -42,7 +42,7 @@
  <tr>
   <td>
    <label class="switch" for="ck1">
-   <!--#tag1-->
+   <!--#btn0-->
    <div class="slider round"></div>
    </label>
   </td>
@@ -51,7 +51,7 @@
  <tr>
   <td>
     <label class="switch" for="ck2">
-    <!--#tag2-->
+    <!--#btn1-->
     <div class="slider round"></div>
    </label>
   </td>

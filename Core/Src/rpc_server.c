@@ -61,6 +61,7 @@
  * @brief UDP recieve callback function
  * @note  ip4_current_src_addr() only works within this udp_recv() function
  *        pcb->remote_ip and pcb->local_ip are both 0.0.0.0 (empty)
+ * @see   https://github.com/lxi-tools/liblxi/blob/master/src/vxi11.c#L57
  */
 udp_recv_fn udp_echo_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port)
 {

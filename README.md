@@ -9,11 +9,15 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 
 ### Working
 
-- DHCP IP Address Management
+- ✅ DHCP IP Address Management
     + MCU continues to run even without active Ethernet connection
     + MCU connects to Network when pluged in via Ethernet
-- Telnet Echo Server on Port (23 / 5025)
+- ✅ Telnet Echo Server on Port (23 / 5025)
     + `$ > telnet 192.168.1.180 5025`
+- ✅ http web interface
+    + ✅ has switches to turn on/off configurations
+    + ✅ uses CGI/SSI
+    + ✅ mandatory `/lxi/identification.xml` is present (but not detected by the LXI tool)
 
 
 ---
@@ -24,31 +28,46 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 - Tutorial [HTTPd web-server on STM32 with SSI](http://ausleuchtung.ch/stm32-nucleo-f767zi-web-server/)
 - STM32F7 [LwIP_TCP_Echo_Server](https://github.com/STMicroelectronics/STM32CubeF7/tree/master/Projects/STM32756G_EVAL/Applications/LwIP/LwIP_TCP_Echo_Server)
 - STM32H7 [LwIP_UDP_Echo_Server](https://github.com/STMicroelectronics/STM32CubeH7/blob/master/Projects/STM32H743I-EVAL/Applications/LwIP/LwIP_UDP_Echo_Server/Src/udp_echoserver.c)
-- [SCPI parser](https://www.jaybee.cz/scpi-parser/)
-- [LXI Ports & Protocols](https://www.lxistandard.org/About/LXI-Protocols.aspx)
+- [SCPI parser](https://www.jaybee.cz/scpi-parser/) Library
+- List of [LXI Ports & Protocols](https://www.lxistandard.org/About/LXI-Protocols.aspx)
+- UDP/Portmap Identification Broadcast example packet: [liblxi](https://github.com/lxi-tools/liblxi/blob/master/src/vxi11.c#L57)
+- Correct SSI API application: [ssi_example.c](https://github.com/particle-iot/lwip/blob/master/contrib/examples/httpd/ssi_example/ssi_example.c)
+
+### Tools
+
+- official [LXI Discovery](https://www.lxistandard.org/About/LXI-Discovery-Tools.aspx) Tool
+    + This sends out a `UDP/RPC/Portmap` broadcast with the `GETPORT` command
+    + the LXI device must reply to this broadcast in `rcp_server.c`
+    + Then the tool requests the `http://<host>/lxi/identification.xml` from the device
+- [lxi-tools](https://lxi-tools.github.io/)
+    + This sends out a `UDP/RPC/Portmap` broadcast with the `GETPORT` command
+    + according to wireshark, the device does not reply --> how does it work then?
+    + The tool will attempt to connect to the device via VXI-11 and `*IRQ?` the name
+- [Wireshark](https://www.wireshark.org/)
 
 ---
 
 ### Todo
 
 - switching DHCP vs. Static IP not working
-    + CPU crashes
-    + Assertion "no packet queues allowed!" failed at line 1009 in ../Middlewares/Third_Party/LwIP/src/core/ipv4/etharp.c
+    + ❌ CPU crashes
+    + ❌ Assertion "no packet queues allowed!" failed at line 1009 in ../Middlewares/Third_Party/LwIP/src/core/ipv4/etharp.c
 - implement clear MVC structure for SCPI commands
 - make dynamic version of `/lxi/identification.xml` with appropriate SSI implementation (not possible because of file extension?) https://www.nongnu.org/lwip/2_0_x/group__httpd.html
     + this requries a hack inside the httpd.c code to add "xml" as supported SSI file --> working now
-    + SSI / CGI information still missing
-
-
+    + ❌ since the xml file contains `<!--comments-->` the LXI Discovery tool does not recognize the device anymore
+- ❌ LXI Identification still unclear, lxi-tools vs. LXI Identification Tool do not behave the same
+- Add further `ASSERT()` statements throughout the code (e.g. for SSI)
+- author/licence/description header for each file
+- refactor variable/function names in http_cgi_app.c
 
 ---
 
 ### Documentation
 
 - exclude from build:
-    + fs_data.c
-    + fs_data_custom.c
-
+    + `fs_data.c`
+    + `fs_data_custom.c`
 
 #### Helper Libraries
 
@@ -61,7 +80,6 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 - Webinterface (http / port 80)
     + http://192.168.1.179/
     + http://192.168.1.179/lxi/identification 
-- 
 
 #### File Structure
 
@@ -75,11 +93,16 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
     + USART Interrupt for UART SCPI
 - `http_cgi_app.c`
     + CGI + SSI implementation for the httpd Webserver
+    + SSI works for both the Website and the `identification.xml`
+- `rpc_server.c`
+    + implements the Sun-RPC Protocol based on UDP (more specifically the `Portmap` protocol)
+    + When a UDP Broadcast (IP address: `xxx.xxx.xxx.255`) is received, the LXI device must answer correctly
 
 `Tools/fs`
 
 - Filesystem for the Webserver
-- use any program `makefsdata` (perl, C, ...) to convert the file System to a C source file
+- use any program `makefsdata` (perl, C, ...) to convert the file System to a C source file `fs_data_custom.c`
+- `fs_data_custom.c` must be copied to `./Middlewares/Third_Party/LwIP/src/apps/http` after re-generation
 
 `LWIP/App`
 
@@ -92,7 +115,10 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 ##### SSI CGI
 
 `#define LWIP_HTTPD_MAX_TAG_NAME_LEN 8`
-#define LWIP_HTTPD_MAX_TAG_INSERT_LEN 192
+`#define LWIP_HTTPD_MAX_TAG_INSERT_LEN 192`
+
+
+
 
 
 
