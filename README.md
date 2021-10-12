@@ -18,6 +18,7 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
     + ✅ has switches to turn on/off configurations
     + ✅ uses CGI/SSI
     + ✅ mandatory `/lxi/identification.xml` is present (but not detected by the LXI tool)
+- ✅ custom physical MAC address from within firmware
 
 
 ---
@@ -56,10 +57,18 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 - make dynamic version of `/lxi/identification.xml` with appropriate SSI implementation (not possible because of file extension?) https://www.nongnu.org/lwip/2_0_x/group__httpd.html
     + this requries a hack inside the httpd.c code to add "xml" as supported SSI file --> working now
     + ❌ since the xml file contains `<!--comments-->` the LXI Discovery tool does not recognize the device anymore
-- ❌ LXI Identification still unclear, lxi-tools vs. LXI Identification Tool do not behave the same
+    + ❌ LXI Identification still unclear, lxi-tools vs. LXI Identification Tool do not behave the same
+    + ❌ pyvisa ResourceManager does not list the device
 - Add further `ASSERT()` statements throughout the code (e.g. for SSI)
 - author/licence/description header for each file
 - refactor variable/function names in http_cgi_app.c
+- change web interface to some generic function LED1 / LED2 instead of confusing "lxi discovery"
+
+### Bug Tracker
+
+- `:SYST:COMM:TCPIP:PHY?` query (over UART only) triggers HardFault
+- sometimes UART does not react to SCPI commands (but keeps printing TCP/IP debug info)
+
 
 ---
 
@@ -109,6 +118,10 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 - `lwip.c` 
     + initialization for DHCP
     + initialization with static IP
+
+`LWIP/Target`
+
+- `LWIP/Target/ethernetif.c` contains some User Code to set the PHY/MAC address
 
 #### Webserver
 

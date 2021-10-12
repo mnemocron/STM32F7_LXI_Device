@@ -80,7 +80,7 @@ osSemaphoreId s_xSemaphore = NULL;
 ETH_HandleTypeDef heth;
 
 /* USER CODE BEGIN 3 */
-
+extern uint8_t MACAddrUser[6];
 /* USER CODE END 3 */
 
 /* Private functions ---------------------------------------------------------*/
@@ -238,7 +238,8 @@ static void low_level_init(struct netif *netif)
   heth.Init.MediaInterface = ETH_MEDIA_INTERFACE_RMII;
 
   /* USER CODE BEGIN MACADDRESS */
-
+  for(int i=0; i<6; i++)
+	  MACAddr[i] = MACAddrUser[i];
   /* USER CODE END MACADDRESS */
 
   hal_eth_init_status = HAL_ETH_Init(&heth);

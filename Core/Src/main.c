@@ -66,6 +66,7 @@ char temp[128];  // to pass UART Rx Ringbuffer to SCPI Input
 uint8_t flag_interpret_scpi = 0;
 
 uint32_t dacValue;
+uint8_t MACAddrUser[6];
 
 extern scpi_interface_t scpi_interface_vxi;
 extern scpi_interface_t scpi_interface_serial;
@@ -126,10 +127,19 @@ int main(void)
   MX_GPIO_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-	lwrb_init(&ringbuffer, uart_rx_buffer_data, sizeof(uart_rx_buffer_data));
 
-	// initialize SCPI Interface for UART Connection
-	SCPI_Init(&scpi_context_serial,
+  /** @todo query I2C EEPROM to retrieve unique MAC address */
+  MACAddrUser[0] = 0x00;
+  MACAddrUser[1] = 0x80;
+  MACAddrUser[2] = 0xE1;
+  MACAddrUser[3] = 0x00;
+  MACAddrUser[4] = 0x00;
+  MACAddrUser[5] = 0x00;
+
+  lwrb_init(&ringbuffer, uart_rx_buffer_data, sizeof(uart_rx_buffer_data));
+
+  // initialize SCPI Interface for UART Connection
+  SCPI_Init(&scpi_context_serial,
 	     	scpi_commands,
 	     	&scpi_interface_serial,
 	     	scpi_units_def,

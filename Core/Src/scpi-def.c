@@ -67,6 +67,7 @@ extern uint32_t newNetmask;
 extern uint8_t deviceDHCPenabled;
 extern uint8_t newDHCPStatus;
 extern uint8_t applyNewNetworkSettings;
+extern uint8_t MACAddrUser[6];
 
 /* USER CODE END EV */
 
@@ -400,20 +401,34 @@ static scpi_result_t TEST_Chanlst(scpi_t *context) {
     return SCPI_RES_OK;
 }
 
+/**
+ * @brief builds a string of the hex representation of the PHY/MAC address
+ *        and writes it to the interface of the scpi_t context
+ */
+static scpi_result_t SYST_Comm_TcpIp_PhyQ(scpi_t * context) {
+	txlen = 0;
+	txlen = snprintf(txbuf, TXBUFLEN, "%02x:%02x:%02x:%02x:%02x:%02x\r\n",
+			MACAddrUser[0], MACAddrUser[1], MACAddrUser[2],
+			MACAddrUser[3], MACAddrUser[4], MACAddrUser[5]);
+	context->interface->write(context, txbuf, txlen);
+    return SCPI_RES_OK;
+}
+
+/**
+ * @brief builds a string of the decimal representation of the 32bit IP address
+ *        and writes it to the interface of the scpi_t context
+ */
 static void scpi_write_ip_address(scpi_t * context, uint32_t addr){
-	txlen = SCPI_Int32ToStr((int)(addr & 0xff), txbuf, 4);
+	// build the full string and write at the end.
+	// do not write partial strings to the tcp/ip backend
+	txlen = 0;
+	txlen += SCPI_Int32ToStr((int)( addr       & 0xff), &txbuf[txlen], 4);
 	txbuf[txlen++] = '.';
-	context->interface->write(context, txbuf, txlen);
-
-	txlen = SCPI_Int32ToStr((int)((addr >> 8) & 0xff), txbuf, 4);
+	txlen += SCPI_Int32ToStr((int)((addr >> 8) & 0xff), &txbuf[txlen], 4);
 	txbuf[txlen++] = '.';
-	context->interface->write(context, txbuf, txlen);
-
-	txlen = SCPI_Int32ToStr((int)((addr >> 16) & 0xff), txbuf, 4);
+	txlen += SCPI_Int32ToStr((int)((addr >>16) & 0xff), &txbuf[txlen], 4);
 	txbuf[txlen++] = '.';
-	context->interface->write(context, txbuf, txlen);
-
-	txlen = SCPI_Int32ToStr((int)((addr >> 24) & 0xff), txbuf, 4);
+	txlen += SCPI_Int32ToStr((int)((addr >>24) & 0xff), &txbuf[txlen], 4);
 	txbuf[txlen++] = '\r';
 	txbuf[txlen++] = '\n';
 	context->interface->write(context, txbuf, txlen);
@@ -610,6 +625,7 @@ const scpi_command_t scpi_commands[] = {
     {.pattern = "SYSTem:COMMunication:TCPIP:GATEway?", .callback = SYST_Comm_TcpIp_GwQ,},
     {.pattern = "SYSTem:COMMunication:TCPIP:DHCP", .callback = SYST_Comm_TcpIp_Dhcp,},
     {.pattern = "SYSTem:COMMunication:TCPIP:DHCP?", .callback = SYST_Comm_TcpIp_DhcpQ,},
+    {.pattern = "SYSTem:COMMunication:TCPIP:PHY?", .callback = SYST_Comm_TcpIp_PhyQ,},
 
     SCPI_CMD_LIST_END
 };
