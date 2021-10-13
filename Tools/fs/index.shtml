@@ -46,7 +46,7 @@
    <div class="slider round"></div>
    </label>
   </td>
-  <td>LXI Discovery</td>
+  <td>LED 1</td>
  </tr>
  <tr>
   <td>
@@ -55,7 +55,7 @@
     <div class="slider round"></div>
    </label>
   </td>
-  <td>Frontpanel LED</td>
+  <td>Function 42</td>
  </tr>
 </tbody>
 </table>

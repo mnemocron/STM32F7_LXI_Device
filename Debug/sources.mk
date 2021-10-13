@@ -22,6 +22,7 @@ OBJCOPY_BIN :=
 SUBDIRS := \
 Core/Src \
 Core/Startup \
+Drivers/EEPROM_24AA/src \
 Drivers/STM32F7xx_HAL_Driver/Src \
 LWIP/App \
 LWIP/Target \
@@ -38,6 +39,6 @@ Middlewares/Third_Party/LwIP/src/core/ipv6 \
 Middlewares/Third_Party/LwIP/src/netif \
 Middlewares/Third_Party/LwIP/src/netif/ppp \
 Middlewares/Third_Party/LwIP/system/OS \
-Middlewares/libscpi/src \
-Middlewares/lwrb/lwrb \
+Middlewares/Third_Party/libscpi/src \
+Middlewares/Third_Party/lwrb/lwrb \
 
