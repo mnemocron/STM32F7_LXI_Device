@@ -24,15 +24,18 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>  // printf ( linker flag: "-u _printf_float" uses 7kB memory)
+
+#include "scpi/scpi.h"          // SCPI Library
 #include "scpi-def.h"           // SCPI User Code
+
+#include "eeprom_24aa.h"        // EEPROM driver
+#include "lwrb/lwrb.h"          // light weight ring buffer
+
 #include "http_cgi_app.h"
 #include "lwip/apps/httpd.h"
 #include "scpi_server.h"
 #include "rpc_server.h"
-#include "eeprom_24aa.h"
-
-#include "scpi/scpi.h"          // SCPI Library
-#include "lwrb/lwrb.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -68,6 +71,8 @@ lwrb_t ringbuffer;
 uint8_t uart_rx_buffer_data[128];
 char temp[128];  // to pass UART Rx Ringbuffer to SCPI Input
 uint8_t flag_interpret_scpi = 0;
+
+char _version_string[32];  // Firmware Version
 
 uint32_t dacValue;
 uint8_t MACAddrUser[6];
@@ -153,11 +158,10 @@ int main(void)
 	     	SCPI_IDN1, SCPI_IDN2, SCPI_IDN3, SCPI_IDN4,
 	     	(char*)&scpi_input_buffer_serial, SCPI_INPUT_BUFFER_LENGTH,
 	     	scpi_error_queue_data_serial, SCPI_ERROR_QUEUE_SIZE);
+  __HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);  // must be enabled again
+  // __HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE);  // @Bug : gets stuck in TIM1 interrupt. Priority issue because of systick?
 
-	__HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);  // must be enabled again
-	// __HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE);  // @Bug : gets stuck in TIM1 interrupt. Priority issue because of systick?
-
-	SCPI_Input(&scpi_context_serial, "*IDN?\n", 6);
+  SCPI_Input(&scpi_context_serial, "*IDN?\n", 6);
 
   /* USER CODE END 2 */
 
@@ -442,12 +446,17 @@ void StartDefaultTask(void *argument)
   httpd_init();
   myCGIinit();
   mySSIinit();
+
+  // print PCB and Firmware Version
+  snprintf(_version_string, _LEN_VERSION_STR, "v%d.%d.%d (%s %s)", _VERSION_MAJOR, _VERSION_MINOR, _VERSION_PATCH, __DATE__, __TIME__);
+  printf("PCB rev. %s\n", _PCB_REVISION);
+  printf("%s\n", _version_string);
   /* Infinite loop */
   for(;;)
   {
 	  // osDelay(1);
-	    // MX_LWIP_Process();  // not required
-	  /** @bug custom init does not work */
+	  // MX_LWIP_Process();  // not required
+	  /** @todo @bug custom init does not work */
 	  if(applyNewNetworkSettings){
 		  applyNewNetworkSettings = 0;
 		  ipAddressPrinted = 0;
@@ -471,18 +480,27 @@ void StartDefaultTask(void *argument)
 		if (!ipAddressPrinted) {
 			if (!ip4_addr_isany(netif_ip4_addr(&gnetif))) {
 				deviceIPaddr = ip4_addr_get_u32(netif_ip4_addr(&gnetif));
+				// print IP address
 				printf("IP %d.%d.%d.%d\n", (int)(deviceIPaddr & 0xff),
 						(int)((deviceIPaddr >> 8) & 0xff),
 						(int)((deviceIPaddr >> 16) & 0xff),
 						(int)(deviceIPaddr >> 24));
 				ipAddressPrinted = TRUE;
+
+				// print PHY/MAC address
+				printf("MAC %02x:%02x:%02x:%02x:%02x:%02x\n",
+						MACAddrUser[0], MACAddrUser[1], MACAddrUser[2],
+						MACAddrUser[3], MACAddrUser[4], MACAddrUser[5]);
 			}
 		}
 
-		// Feed UART Rx data to SCPI_Input when UART Line goes IDLE (IT)
+		// Feed UART Rx data to SCPI_Input when a line end is detected in UART IRQ
 		if(flag_interpret_scpi){
 			flag_interpret_scpi = FALSE;
 			/** @todo : does this work without the temp buffer ? */
+			// use lwrb lenght as len
+			// use lwrb start char as pointer
+			// reset lwrb buffer afterwards
 			uint8_t len = lwrb_get_full(&ringbuffer);
 			lwrb_read(&ringbuffer, temp, len);
 			SCPI_Input(&scpi_context_serial, temp, len);

@@ -10,10 +10,14 @@
 
 #include "http_cgi_app.h"
 #include <String.h>
+#include <stdio.h>
 
 tCGI theCGItable[1];
 bool LD1ON = false; // this variable will indicate if the LD3 LED on the board is ON or not
 bool LD2ON = false; // this variable will indicate if our LD2 LED on the board is ON or not
+
+extern uint32_t deviceIPaddr;
+extern char _version_string[32];  // Firmware Version
 
 #define numLXItags 12
 
@@ -132,38 +136,47 @@ u16_t lxiSSIHandler(
                              )
 {
 // uint16_t lxiSSIHandler(int iIndex, char *pcInsert, int iInsertLen) {
+	char ip_str[20];
+	snprintf(ip_str, (4*3+3+1), "%d.%d.%d.%d",
+			(int)(deviceIPaddr & 0xff),
+			(int)((deviceIPaddr >> 8) & 0xff),
+			(int)((deviceIPaddr >> 16) & 0xff),
+			(int)(deviceIPaddr >> 24));
+
 	if(iIndex == 0){
 		// Serial Number
-		char myStr[] = "S/N.12345";
+		char myStr[] = _SERIAL_NUMBER;
 		strcpy(pcInsert, myStr);
 		return strlen(myStr);
 	} else if(iIndex == 1) {
 		// Firmware Version
-		char myStr[] = "V1.0.0";
-		strcpy(pcInsert, myStr);
-		return strlen(myStr);
+		strcpy(pcInsert, _version_string);
+		return strlen(_version_string);
 	} else if(iIndex == 2){
 		// IP Address
-		char myStr[] = "192.168.1.179";
-		strcpy(pcInsert, myStr);
-		return strlen(myStr);
+		strcpy(pcInsert, ip_str);
+		return strlen(ip_str);
 	} else if(iIndex == 3){
 		// INSTR::IP_ADDRESS
-		char myStr[] = "INSTR::192.168.1.179";
+		char myStr[64];
+		snprintf(myStr, 64, "INSTR::%s", ip_str);
 		strcpy(pcInsert, myStr);
 		return strlen(myStr);
 	} else if (iIndex == 4){
 		// Subnet Mask
+		/** @todo netmask as global vairable? */
 		char myStr[] = "255.255.255.0";
 		strcpy(pcInsert, myStr);
 		return strlen(myStr);
 	} else if (iIndex == 5){
 		// Physical MAC Address
+		/** @todo MAC as global vairable? */
 		char myStr[] = "00:00:00:00:00:00";
 		strcpy(pcInsert, myStr);
 		return strlen(myStr);
 	} else if(iIndex == 6){
 		// Gateway Address
+		/** @todo gateway as global vairable? */
 		char myStr[] = "192.168.1.1";
 		strcpy(pcInsert, myStr);
 		return strlen(myStr);
@@ -179,7 +192,8 @@ u16_t lxiSSIHandler(
 		return strlen(myStr);
 	} else if(iIndex == 9){
 		// Instrument Address String
-		char myStr[] = "INSTR::192.168.1.179";
+		char myStr[64];
+		snprintf(myStr, 64, "INSTR::%s", ip_str);
 		strcpy(pcInsert, myStr);
 		return strlen(myStr);
 	} else if(iIndex == 10){

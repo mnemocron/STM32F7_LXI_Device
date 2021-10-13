@@ -17,7 +17,7 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 - ✅ http web interface
     + ✅ has switches to turn on/off configurations
     + ✅ uses CGI/SSI
-    + ✅ mandatory `/lxi/identification.xml` is present (but not detected by the LXI tool)
+    + ⚠️ mandatory `/lxi/identification.xml` is present (but not detected by the LXI tool)
 - ✅ custom physical MAC address from within firmware
 
 
@@ -50,24 +50,33 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 
 ### Todo
 
-- switching DHCP vs. Static IP not working
-    + ❌ CPU crashes
-    + ❌ Assertion "no packet queues allowed!" failed at line 1009 in ../Middlewares/Third_Party/LwIP/src/core/ipv4/etharp.c
-- implement clear MVC structure for SCPI commands
-- make dynamic version of `/lxi/identification.xml` with appropriate SSI implementation (not possible because of file extension?) https://www.nongnu.org/lwip/2_0_x/group__httpd.html
-    + this requries a hack inside the httpd.c code to add "xml" as supported SSI file --> working now
-    + ❌ since the xml file contains `<!--comments-->` the LXI Discovery tool does not recognize the device anymore
-    + ❌ LXI Identification still unclear, lxi-tools vs. LXI Identification Tool do not behave the same
-    + ❌ pyvisa ResourceManager does not list the device
-- Add further `ASSERT()` statements throughout the code (e.g. for SSI)
-- author/licence/description header for each file
-- refactor variable/function names in http_cgi_app.c
-- change web interface to some generic function LED1 / LED2 instead of confusing "lxi discovery"
+| ❌ | 🔄 | ⚠️ | ✅ |
+|:---:|:---:|:---:|:---:|
+| Todo | WIP | Debug (broken) | Done (working) |
 
-### Bug Tracker
-
-- `:SYST:COMM:TCPIP:PHY?` query (over UART only) triggers HardFault
-- sometimes UART does not react to SCPI commands (but keeps printing TCP/IP debug info)
+- 🔄 switching DHCP vs. Static IP
+    + ⚠️ CPU crashes when switching to static IP
+    + ⚠️ Assertion "no packet queues allowed!" failed at line 1009 in `../Middlewares/Third_Party/LwIP/src/core/ipv4/etharp.c`
+    + ❌ what is Auto-IP?
+- 🔄 implement EEPROM to store/load settings (at startup)
+    + ❌ store DHCP on/off
+    + ❌ store static IP address, mask and gateway
+    + ❌ provide wrapper for user to store user settings
+- ⚠️ cgi / ssi now broken? with the LED
+- 🔄 make dynamic version of `/lxi/identification.xml` with appropriate SSI implementation
+    + https://www.nongnu.org/lwip/2_0_x/group__httpd.html
+    + ✅ this requries a hack inside the `httpd.c` code to add "xml" as supported SSI file --> working now
+    + ⚠️ /lxi/identification now yields 404 ???
+    + 🔄 since the xml file contains `<!--comments-->` the LXI Discovery tool does not recognize the device anymore
+    + 🔄 LXI Identification still unclear, lxi-tools vs. LXI Identification Tool do not behave the same
+    + 🔄 pyvisa ResourceManager does not list the device
+- ❌ Add further `ASSERT()` statements throughout the code (e.g. for SSI)
+- ❌ author/licence/description header for each file
+- ❌ refactor variable/function names in `http_cgi_app.c`
+- ⚠️ `:SYST:COMM:TCPIP:PHY?` query (over UART only) triggers HardFault
+- ⚠️ sometimes UART does not react to SCPI commands (but keeps printing TCP/IP debug info)
+- ❌ cleanup spaghetti code of global variables, introduce hierarchy of config headers
+- ❌ implement clear MVC structure for SCPI commands
 
 
 ---

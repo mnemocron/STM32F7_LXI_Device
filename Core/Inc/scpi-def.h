@@ -51,10 +51,10 @@
  * IDN3 : Serial Number (e.g. BM420a2018)
  * IDN4 : Firmware Version (e.g. A.02.14-02.40-02.14-00.49-02-01)
  */
-#define SCPI_IDN1 "ACME INC."
-#define SCPI_IDN2 "VXI11 DEVICE 9000"
-#define SCPI_IDN3 "V1.0.0"
-#define SCPI_IDN4 "2021-03-14"
+#define SCPI_IDN1 "ETA SYSTEMS GMBH"
+#define SCPI_IDN2 "LXI REMOTE DEMO"
+#define SCPI_IDN3 _SERIAL_NUMBER
+#define SCPI_IDN4 "V1.0.0"
 
 extern const scpi_command_t scpi_commands[];
 extern scpi_interface_t scpi_interface_serial;

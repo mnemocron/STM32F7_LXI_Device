@@ -32,6 +32,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>  // printf ( linker flag: "-u _printf_float" uses 7kB memory)
 
 /* USER CODE END Includes */
 
@@ -111,6 +112,16 @@ void Error_Handler(void);
 #define LD2_Pin GPIO_PIN_7
 #define LD2_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
+
+#define _LEN_VERSION_STR (48) // v12.345.678 (Jan 01 1970 22:29:37)\n
+#define _VERSION_MAJOR (0)
+#define _VERSION_MINOR (0)
+#define _VERSION_PATCH (3)
+#define _LEN_PCB_STR (16)
+#define _PCB_REVISION "2.xxx.xxx.xxx"
+#define _LEN_SERIAL_N  (16)
+#define _SERIAL_NUMBER ("ABC12345XYZ")
+
 /**
  *  @see https://github.com/STMicroelectronics/STM32CubeF4/blob/master/Projects/STM32F401RE-Nucleo/Examples/UART/UART_Printf/Src/main.c
  */
