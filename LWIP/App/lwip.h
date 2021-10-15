@@ -40,7 +40,8 @@
 #endif /* WITH_RTOS */
 
 /* USER CODE BEGIN 0 */
-void CUSTOM_LWIP_Init(ip4_addr_t*, ip4_addr_t*, ip4_addr_t*);
+void STATICIP_LWIP_Init(u32_t, u32_t, u32_t);
+void LWIP_Deinit(void);
 /* USER CODE END 0 */
 
 /* Global Variables ----------------------------------------------------------*/

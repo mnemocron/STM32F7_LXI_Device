@@ -53,23 +53,45 @@ osThreadAttr_t attributes;
 /* USER CODE END OS_THREAD_ATTR_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN 2 */
-void CUSTOM_LWIP_Init(ip4_addr_t *ipaddr, ip4_addr_t *netmask, ip4_addr_t *gw)
+void LWIP_Deinit(void)
 {
   /* Terminate any old link threads */
+  netif_remove(&gnetif);
   osThreadTerminate(link_thread);
   link_thread = NULL;
+}
+
+void STATICIP_LWIP_Init(u32_t ip, u32_t mask, u32_t gate)
+{
   /* Initilialize the LwIP stack with RTOS */
+  /** @todo HardFault after calling tcpip_init again */
   tcpip_init( NULL, NULL );
   dhcp_stop(&gnetif);
 
   /* IP addresses initialization with DHCP (IPv4) */
-  //ipaddr.addr = 0;
-  //netmask.addr = 0;
-  //gw.addr = 0;
+  ipaddr.addr = ip;
+  netmask.addr = mask;
+  gw.addr = gate;
+
+  /* IP addresses initialization without DHCP (IPv4) */
+  // IP_ADDRESS[0] = 192;
+  // IP_ADDRESS[1] = 168;
+  // IP_ADDRESS[2] = 1;
+  // IP_ADDRESS[3] = 138;
+  // NETMASK_ADDRESS[0] = 255;
+  // NETMASK_ADDRESS[1] = 255;
+  // NETMASK_ADDRESS[2] = 255;
+  // NETMASK_ADDRESS[3] = 0;
+  // GATEWAY_ADDRESS[0] = 192;
+  // GATEWAY_ADDRESS[1] = 168;
+  // GATEWAY_ADDRESS[2] = 1;
+  // GATEWAY_ADDRESS[3] = 1;
+  // IP4_ADDR(&ipaddr, IP_ADDRESS[0], IP_ADDRESS[1], IP_ADDRESS[2], IP_ADDRESS[3]);
+  // IP4_ADDR(&netmask, NETMASK_ADDRESS[0], NETMASK_ADDRESS[1] , NETMASK_ADDRESS[2], NETMASK_ADDRESS[3]);
+  // IP4_ADDR(&gw, GATEWAY_ADDRESS[0], GATEWAY_ADDRESS[1], GATEWAY_ADDRESS[2], GATEWAY_ADDRESS[3]);
 
   /* add the network interface (IPv4/IPv6) with RTOS */
-  netif_remove(&gnetif);
-  netif_add(&gnetif, ipaddr, netmask, gw, NULL, &ethernetif_init, &tcpip_input);
+  netif_add(&gnetif, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &tcpip_input);
 
   /* Registers the default network interface */
   netif_set_default(&gnetif);

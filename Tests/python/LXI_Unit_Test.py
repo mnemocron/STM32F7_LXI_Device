@@ -27,7 +27,7 @@ import pyvisa as visa
 # import vxi11 as vxi
 from time import sleep
 
-DEVICE_IP = '192.168.1.179'
+DEVICE_IP = '192.168.1.134'
 DEVICE_RSRC_STRING = 'TCPIP0::' + DEVICE_IP + '::5025::SOCKET'
 
 # GPIB / VISA Resource Manager
@@ -46,12 +46,27 @@ sleep(pause)
 # print(dut.write(':TEST:BOOL 1'))
 # print(dut.query(':TEST:CHOICE? BUS?'))
 print('LXI > ' + dut.query(':TEST:TEXT "Hello"'))
-#print('LXI > ' + dut.query(':TEST5:NUM7'))
+print('LXI > ' + dut.query(':TEST5:NUM7'))
 print('LXI > ' + dut.query(':SYST:COMM:TCPIP:DHCP?'))
 print('LXI > ' + dut.query(':SYST:COMM:TCPIP:IP?'))
 print('LXI > ' + dut.query(':SYST:COMM:TCPIP:GATE?'))
 print('LXI > ' + dut.query(':SYST:COMM:TCPIP:MASK?'))
 print('LXI > ' + dut.query(':SYST:COMM:TCPIP:PHY?'))
+
+dut.close()
+
+#%%
+dut = rm.open_resource(DEVICE_RSRC_STRING)  # Visa Drivers over GPIB-USB Adapter
+dut.timeout = 1000;
+dut.read_termination = '\n'
+
+pause = 0.1
+sleep(pause)
+
+dut.write(':SYST:COMM:TCPIP:IP "192.168.1.173"')
+dut.write(':SYST:COMM:TCPIP:MASK "255.255.255.0"')
+dut.write(':SYST:COMM:TCPIP:GATE "192.168.1.1"')
+dut.write(':SYST:COMM:TCPIP:DHCP 0')
 
 dut.close()
 

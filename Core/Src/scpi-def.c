@@ -449,9 +449,10 @@ static scpi_result_t SYST_Comm_TcpIp_Ip(scpi_t * context) {
 	if(! ip4addr_aton(buffer, &ipaddr)){
 		return SCPI_RES_ERR;
 	}
+	/** @bug checking for valid IP sometimes breaks even with correct IP
 	if(! ip4_addr_isany(&ipaddr)){
 		return SCPI_RES_ERR;
-	}
+	} */
 	newIPaddr = ipaddr.addr;
 	scpi_write_ip_address(context, (uint32_t)ipaddr.addr);
     return SCPI_RES_OK;
@@ -478,7 +479,7 @@ static scpi_result_t SYST_Comm_TcpIp_Mask(scpi_t * context) {
 	if(! ip4addr_aton(buffer, &ipaddr)){
 		return SCPI_RES_ERR;
 	}
-	if(! ip4_addr_netmask_valid(&ipaddr)){
+	if(! ip4_addr_netmask_valid(ipaddr.addr)){
 		return SCPI_RES_ERR;
 	}
 	newNetmask = ipaddr.addr;
@@ -507,9 +508,10 @@ static scpi_result_t SYST_Comm_TcpIp_Gw(scpi_t * context) {
 	if(! ip4addr_aton(buffer, &ipaddr)){
 		return SCPI_RES_ERR;
 	}
+	/** @bug checking for valid IP sometimes breaks even with correct IP
 	if(! ip4_addr_isany(&ipaddr)){
 		return SCPI_RES_ERR;
-	}
+	} */
 	newGateway = ipaddr.addr;
 	scpi_write_ip_address(context, (uint32_t)ipaddr.addr);
     return SCPI_RES_OK;
@@ -530,8 +532,6 @@ static scpi_result_t SYST_Comm_TcpIp_Dhcp(scpi_t * context) {
     if(param1 != deviceDHCPenabled){
     	newDHCPStatus = param1;
     	applyNewNetworkSettings = 1;
-        txlen = snprintf(txbuf, TXBUFLEN, "New DHCP=%d\r\n", param1);
-        context->interface->write(context, txbuf, txlen);
     }
 
     return SCPI_RES_OK;

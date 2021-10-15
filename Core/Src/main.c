@@ -462,17 +462,13 @@ void StartDefaultTask(void *argument)
 		  ipAddressPrinted = 0;
 		  if(newDHCPStatus){
 			  deviceDHCPenabled = 1;
+			  LWIP_Deinit();
 			  MX_LWIP_Init();
 			  printf("Init DHCP On\n");
 		  } else {
 			  deviceDHCPenabled = 0;
-			  ip4_addr_t ipaddr;
-			  ip4_addr_t netmask;
-			  ip4_addr_t gateway;
-			  ipaddr.addr = newIPaddr;
-			  netmask.addr = newNetmask;
-			  gateway.addr = newGateway;
-			  CUSTOM_LWIP_Init(&ipaddr, &netmask, &gateway);
+			  LWIP_Deinit();
+			  STATICIP_LWIP_Init(newIPaddr, newNetmask, newGateway);
 			  printf("Init DHCP Off\n");
 		  }
 	  }
@@ -504,6 +500,8 @@ void StartDefaultTask(void *argument)
 			uint8_t len = lwrb_get_full(&ringbuffer);
 			lwrb_read(&ringbuffer, temp, len);
 			SCPI_Input(&scpi_context_serial, temp, len);
+		} else {
+			__HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);  // must be enabled again
 		}
 	  }
   /* USER CODE END 5 */
