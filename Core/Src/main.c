@@ -99,7 +99,7 @@ static void MX_I2C1_Init(void);
 void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
-
+void I2C_ScanAddresses(I2C_HandleTypeDef *hi2c);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -139,14 +139,14 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
-  /** @todo query I2C EEPROM to retrieve unique MAC address */
+	MACAddrUser[0] = 0x00;
+	MACAddrUser[1] = 0x80;
+	MACAddrUser[2] = 0xE1;
+	MACAddrUser[3] = 0xc0;
+	MACAddrUser[4] = 0xff;
+	MACAddrUser[5] = 0xee;
+
   EEPROM_GetEUI48(EEPROM24AA_ADDRESS, MACAddrUser);
-  MACAddrUser[0] = 0x00;
-  MACAddrUser[1] = 0x80;
-  MACAddrUser[2] = 0xE1;
-  MACAddrUser[3] = 0xc0;
-  MACAddrUser[4] = 0xff;
-  MACAddrUser[5] = 0xee;
 
   lwrb_init(&ringbuffer, uart_rx_buffer_data, sizeof(uart_rx_buffer_data));
 
@@ -366,7 +366,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOG_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LD1_Pin|LD3_Pin|LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, LD1_Pin|TRIG_OUT_Pin|LD3_Pin|LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(USB_PowerSwitchOn_GPIO_Port, USB_PowerSwitchOn_Pin, GPIO_PIN_RESET);
@@ -383,6 +383,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : TRIG_OUT_Pin */
+  GPIO_InitStruct.Pin = TRIG_OUT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(TRIG_OUT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : USB_PowerSwitchOn_Pin */
   GPIO_InitStruct.Pin = USB_PowerSwitchOn_Pin;

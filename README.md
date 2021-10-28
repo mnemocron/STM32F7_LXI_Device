@@ -60,9 +60,9 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
     + ? not anymore: ⚠️ Assertion "no packet queues allowed!" failed at line 1009 in `../Middlewares/Third_Party/LwIP/src/core/ipv4/etharp.c`
     + ❌ what is Auto-IP?
 - 🔄 implement EEPROM to store/load settings (at startup)
-    + ❌ store DHCP on/off
-    + ❌ store static IP address, mask and gateway
-    + ❌ provide wrapper for user to store user settings
+    + 🔄 store DHCP on/off
+    + 🔄 store static IP address, mask and gateway
+    + ✅ provide wrapper for user to store user settings
 - ⚠️ cgi / ssi now broken? with the LED
 - 🔄 make dynamic version of `/lxi/identification.xml` with appropriate SSI implementation
     + https://www.nongnu.org/lwip/2_0_x/group__httpd.html
