@@ -21,6 +21,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void myCGIinit(void);
 void mySSIinit(void);
+
 uint16_t mySSIHandler(int iIndex, char *pcInsert, int iInsertLen);
 const char* LedCGIhandler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]);
 

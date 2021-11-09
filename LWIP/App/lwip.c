@@ -53,42 +53,29 @@ osThreadAttr_t attributes;
 /* USER CODE END OS_THREAD_ATTR_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN 2 */
-void LWIP_Deinit(void)
+void MX_LWIP_Deinit(void)
 {
+  dhcp_stop(&gnetif);
   /* Terminate any old link threads */
   netif_remove(&gnetif);
   osThreadTerminate(link_thread);
   link_thread = NULL;
 }
 
-void STATICIP_LWIP_Init(u32_t ip, u32_t mask, u32_t gate)
+/**
+  * LwIP initialization function
+  * re-initialization: must not reinitialize tcpip_init();
+  */
+void MX_LWIP_Reinit_DHCP(void)
 {
+  MX_LWIP_Deinit();
   /* Initilialize the LwIP stack with RTOS */
-  /** @todo HardFault after calling tcpip_init again */
-  tcpip_init( NULL, NULL );
-  dhcp_stop(&gnetif);
+  // tcpip_init( NULL, NULL );  // must not!
 
   /* IP addresses initialization with DHCP (IPv4) */
-  ipaddr.addr = ip;
-  netmask.addr = mask;
-  gw.addr = gate;
-
-  /* IP addresses initialization without DHCP (IPv4) */
-  // IP_ADDRESS[0] = 192;
-  // IP_ADDRESS[1] = 168;
-  // IP_ADDRESS[2] = 1;
-  // IP_ADDRESS[3] = 138;
-  // NETMASK_ADDRESS[0] = 255;
-  // NETMASK_ADDRESS[1] = 255;
-  // NETMASK_ADDRESS[2] = 255;
-  // NETMASK_ADDRESS[3] = 0;
-  // GATEWAY_ADDRESS[0] = 192;
-  // GATEWAY_ADDRESS[1] = 168;
-  // GATEWAY_ADDRESS[2] = 1;
-  // GATEWAY_ADDRESS[3] = 1;
-  // IP4_ADDR(&ipaddr, IP_ADDRESS[0], IP_ADDRESS[1], IP_ADDRESS[2], IP_ADDRESS[3]);
-  // IP4_ADDR(&netmask, NETMASK_ADDRESS[0], NETMASK_ADDRESS[1] , NETMASK_ADDRESS[2], NETMASK_ADDRESS[3]);
-  // IP4_ADDR(&gw, GATEWAY_ADDRESS[0], GATEWAY_ADDRESS[1], GATEWAY_ADDRESS[2], GATEWAY_ADDRESS[3]);
+  ipaddr.addr = 0;
+  netmask.addr = 0;
+  gw.addr = 0;
 
   /* add the network interface (IPv4/IPv6) with RTOS */
   netif_add(&gnetif, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &tcpip_input);
@@ -124,6 +111,61 @@ void STATICIP_LWIP_Init(u32_t ip, u32_t mask, u32_t gate)
   link_thread = osThreadNew(ethernetif_set_link, &link_arg, &attributes);
 /* USER CODE END OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
+  /* Start DHCP negotiation for a network interface (IPv4) */
+  dhcp_start(&gnetif);
+}
+
+/**
+  * LwIP initialization function
+  * re-initialization: must not reinitialize tcpip_init();
+  */
+void MX_LWIP_Reinit_Manual(u32_t new_ip, u32_t new_mask, u32_t new_gate)
+{
+  MX_LWIP_Deinit();
+  /* Initilialize the LwIP stack with RTOS */
+  // tcpip_init( NULL, NULL );  // must not
+
+  /* IP addresses initialization with DHCP (IPv4) */
+  ipaddr.addr = new_ip;
+  netmask.addr = new_mask;
+  gw.addr = new_gate;
+
+  /* add the network interface (IPv4/IPv6) with RTOS */
+  netif_add(&gnetif, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &tcpip_input);
+
+  /* Registers the default network interface */
+  netif_set_default(&gnetif);
+
+  if (netif_is_link_up(&gnetif))
+  {
+	/* When the netif is fully configured this function must be called */
+	netif_set_up(&gnetif);
+  }
+  else
+  {
+	/* When the netif link is down this function must be called */
+	netif_set_down(&gnetif);
+  }
+
+  /* Set the link callback function, this function is called on change of link status*/
+  netif_set_link_callback(&gnetif, ethernetif_update_config);
+
+  /* create a binary semaphore used for informing ethernetif of frame reception */
+  Netif_LinkSemaphore = osSemaphoreNew(1, 1, NULL);
+
+  link_arg.netif = &gnetif;
+  link_arg.semaphore = Netif_LinkSemaphore;
+  /* Create the Ethernet link handler thread */
+/* USER CODE BEGIN OS_THREAD_NEW_CMSIS_RTOS_V2 */
+  memset(&attributes, 0x0, sizeof(osThreadAttr_t));
+  attributes.name = "LinkThr";
+  attributes.stack_size = INTERFACE_THREAD_STACK_SIZE;
+  attributes.priority = osPriorityBelowNormal;
+  link_thread = osThreadNew(ethernetif_set_link, &link_arg, &attributes);
+/* USER CODE END OS_THREAD_NEW_CMSIS_RTOS_V2 */
+
+  /* Start DHCP negotiation for a network interface (IPv4) */
+  // dhcp_start(&gnetif);  // not for manual IP
 }
 /* USER CODE END 2 */
 

@@ -100,6 +100,7 @@ void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 void I2C_ScanAddresses(I2C_HandleTypeDef *hi2c);
+void LXI_LCI_Mechanism(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -434,6 +435,18 @@ PUTCHAR_PROTOTYPE {
 	// while(!(CDC_Transmit_FS((uint8_t*)&ch, 1) == USBD_BUSY));
 	return ch;
 }
+
+/**
+ * @note LXI Standard v1.5 - 2.4.5 LAN Configuration Initialize (LCI)
+ * @note LXI Standard v1.5 - 2.4.5.1 LCI Mechanism ("LAN RESET" menu entry that, when activated, places its network settings in a default state)
+ */
+void LXI_LCI_Mechanism(void)
+{
+  deviceDHCPenabled = 1;
+  MX_LWIP_Deinit();
+  MX_LWIP_Reinit_DHCP();
+  printf("LCI: Init DHCP On\n");
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -469,13 +482,13 @@ void StartDefaultTask(void *argument)
 		  ipAddressPrinted = 0;
 		  if(newDHCPStatus){
 			  deviceDHCPenabled = 1;
-			  LWIP_Deinit();
-			  MX_LWIP_Init();
+			  MX_LWIP_Deinit();
+			  MX_LWIP_Reinit_DHCP();
 			  printf("Init DHCP On\n");
 		  } else {
 			  deviceDHCPenabled = 0;
-			  LWIP_Deinit();
-			  STATICIP_LWIP_Init(newIPaddr, newNetmask, newGateway);
+			  MX_LWIP_Deinit();
+			  MX_LWIP_Reinit_Manual(newIPaddr, newNetmask, newGateway);
 			  printf("Init DHCP Off\n");
 		  }
 	  }

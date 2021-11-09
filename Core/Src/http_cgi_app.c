@@ -8,25 +8,29 @@
  *      https://github.com/JoeMerten/Stm32-Tools-Evaluation/tree/master/STM32Cube_FW_F4_V1.9.0/Projects/STM324xG_EVAL/Applications/LwIP/LwIP_HTTP_Server_Raw/Src
  */
 
+/* Includes */
 #include "http_cgi_app.h"
 #include <String.h>
 #include <stdio.h>
 
+/* Defines */
+#define numLXItags 12
+
+/* user variables */
 tCGI theCGItable[1];
 bool LD1ON = false; // this variable will indicate if the LD3 LED on the board is ON or not
 bool LD2ON = false; // this variable will indicate if our LD2 LED on the board is ON or not
+/* define some pre-registered tags
+ if one of those tags appears in a .shtml file,
+ the ssi_handler is called with iIndex pointing to the location of the tag in this array
+ */
+const char *theLXItags[numLXItags] = { "lxi0", "lxi1", "lxi2", "lxi3", "lxi4", "lxi5", "lxi6", "lxi7", "lxi8", "lxi9", "btn0", "btn1" };
+const tCGI LedCGI = { "/app.cgi", LedCGIhandler };
 
+/* external variables */
 extern uint32_t deviceIPaddr;
 extern char _version_string[32];  // Firmware Version
 
-#define numLXItags 12
-
-// define some pre-registered tags
-// if one of those tags appears in a .shtml file,
-// the ssi_handler is called with iIndex pointing to the location of the tag in this array
-const char *theLXItags[numLXItags] = { "lxi0", "lxi1", "lxi2", "lxi3", "lxi4", "lxi5", "lxi6", "lxi7", "lxi8", "lxi9", "btn0", "btn1" };
-
-const tCGI LedCGI = { "/app.cgi", LedCGIhandler };
 
 const char* LedCGIhandler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]) {
 	// remember if the parameters have been sent in the URL

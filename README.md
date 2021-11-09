@@ -54,11 +54,12 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 |:---:|:---:|:---:|:---:|
 | Todo | WIP | Debug (broken) | Done (working) |
 
-- 🔄 switching DHCP vs. Static IP
+- 🔄 switching DHCP vs. MAnual IP
     + ⚠️ CPU crashes when switching to static IP
     + ⚠️ HardFault after calling tcpip_init() a 2nd time. Is there a way to deinit or reinit the tcp?
     + ? not anymore: ⚠️ Assertion "no packet queues allowed!" failed at line 1009 in `../Middlewares/Third_Party/LwIP/src/core/ipv4/etharp.c`
     + ❌ what is Auto-IP?
+        * lwip/dhcp opt.h suppors Auto Ip cooperation
 - 🔄 implement EEPROM to store/load settings (at startup)
     + 🔄 store DHCP on/off
     + 🔄 store static IP address, mask and gateway
@@ -126,12 +127,15 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 `LWIP/App`
 
 - `lwip.c` 
-    + initialization for DHCP
-    + initialization with static IP
+    + initialization with DHCP
+    + initialization with manual IP
 
 `LWIP/Target`
 
 - `LWIP/Target/ethernetif.c` contains some User Code to set the PHY/MAC address
+
+- `eeprom_24aa.h` contains macros to store and retreive data (e.g. manual IP config) in EEPROM
+
 
 #### Webserver
 
