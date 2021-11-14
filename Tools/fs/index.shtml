@@ -36,7 +36,7 @@
  </tr>
 </tbody>
 </table>
-<form class="btn" method="get" action="/app.cgi">
+<form class="btn" method="get" action="/settings.cgi">
 <table >
 <tbody>
  <tr>

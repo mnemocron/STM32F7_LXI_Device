@@ -40,9 +40,7 @@
 #endif /* WITH_RTOS */
 
 /* USER CODE BEGIN 0 */
- void MX_LWIP_Deinit(void);
- void MX_LWIP_Reinit_DHCP(void);
- void MX_LWIP_Reinit_Manual(u32_t new_ip, u32_t new_mask, u32_t new_gate);
+
 /* USER CODE END 0 */
 
 /* Global Variables ----------------------------------------------------------*/

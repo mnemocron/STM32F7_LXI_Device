@@ -65,7 +65,7 @@ extern TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN EV */
 extern scpi_t scpi_context_serial;
-extern uint8_t flag_interpret_scpi;
+extern uint8_t flag_uart_cmd_available;
 extern lwrb_t ringbuffer;
 /* USER CODE END EV */
 
@@ -197,11 +197,11 @@ void USART3_IRQHandler(void)
 		HAL_UART_Receive_IT(&huart3, (uint8_t*)&rx, 1);  // receive the single char in non-blocking mode
 		lwrb_write(&ringbuffer, &rx, 1);
 		if(rx == '\n' || rx == '\r')
-			flag_interpret_scpi = 1;
+			flag_uart_cmd_available = 1;
 	}
 	if(__HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_IDLE)) {
 		__HAL_UART_CLEAR_IT(&huart3, UART_IT_IDLE);
-		flag_interpret_scpi = 1;
+		flag_uart_cmd_available = 1;
 	}
 
 

@@ -13,6 +13,7 @@
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
+#define STRLEN_CGI_SSI_TEMP (64 + 32)
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -23,7 +24,7 @@ void myCGIinit(void);
 void mySSIinit(void);
 
 uint16_t mySSIHandler(int iIndex, char *pcInsert, int iInsertLen);
-const char* LedCGIhandler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]);
+const char* settings_CGI_Handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]);
 
 
 

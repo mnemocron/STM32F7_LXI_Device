@@ -24,18 +24,16 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>  // printf ( linker flag: "-u _printf_float" uses 7kB memory)
-
+#include <stdio.h>   // printf ( linker flag: "-u _printf_float" uses 7kB memory)
+#include <stdbool.h>
 #include "scpi/scpi.h"          // SCPI Library
 #include "scpi-def.h"           // SCPI User Code
-
-#include "eeprom_24aa.h"        // EEPROM driver
-#include "lwrb/lwrb.h"          // light weight ring buffer
-
-#include "http_cgi_app.h"
-#include "lwip/apps/httpd.h"
-#include "scpi_server.h"
-#include "rpc_server.h"
+#include "eeprom_24aa.h"        // EEPROM macros
+#include "lwrb/lwrb.h"          // light weight ring buffer for UART
+#include "http_cgi_app.h"       // http User Code
+#include "lwip/apps/httpd.h"    // http Library
+#include "scpi_server.h"        // TCP/IP server for SCPI input
+#include "rpc_server.h"         // LXI discovery service
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -70,25 +68,34 @@ const osThreadAttr_t defaultTask_attributes = {
 lwrb_t ringbuffer;
 uint8_t uart_rx_buffer_data[128];
 char temp[128];  // to pass UART Rx Ringbuffer to SCPI Input
-uint8_t flag_interpret_scpi = 0;
+bool flag_uart_cmd_available = false;
 
-char _version_string[32];  // Firmware Version
-
-uint32_t dacValue;
-uint8_t MACAddrUser[6];
-
+/* external API interfaces */
 extern scpi_interface_t scpi_interface_vxi;
 extern scpi_interface_t scpi_interface_serial;
 extern struct netif gnetif;
 
-uint32_t deviceIPaddr = 0;
-uint32_t newIPaddr = 0;
-uint32_t newGateway = 0;
-uint32_t newNetmask = 0;
-uint8_t deviceDHCPenabled = 0;
-uint8_t newDHCPStatus = 0;
-uint8_t applyNewNetworkSettings = 0;
+/* global variables to save new device settings */
+uint8_t MACAddrUser[6];
+uint32_t newSettings_IPv4Addr = 0;
+uint32_t newSettings_IPv4Gate = 0;
+uint32_t newSettings_IPv4Mask = 0;
+bool newSettings_DHCPenabled = false;
 
+/* global flags */
+bool applySettings_DHCP     = false;
+bool applySettings_IPv4Addr = false;
+bool applySettings_IPv4Mask = false;
+bool applySettings_IPv4Gate = false;
+
+/* global device status variables */
+uint32_t deviceStatus_IPv4Addr = 0;
+uint32_t deviceStatus_IPv4Mask = 0;
+uint32_t deviceStatus_IPv4Gate = 0;
+bool deviceStatus_DHCPenabled = false;
+char _version_string[32];  // Firmware Version
+
+ip4_addr_t ipv4_temp;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -140,13 +147,14 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
-	MACAddrUser[0] = 0x00;
-	MACAddrUser[1] = 0x80;
-	MACAddrUser[2] = 0xE1;
-	MACAddrUser[3] = 0xc0;
-	MACAddrUser[4] = 0xff;
-	MACAddrUser[5] = 0xee;
+  MACAddrUser[0] = 0x00;
+  MACAddrUser[1] = 0x80;
+  MACAddrUser[2] = 0xE1;
+  MACAddrUser[3] = 0xc0;
+  MACAddrUser[4] = 0xff;
+  MACAddrUser[5] = 0xee;
 
+  // read EUI48 compatible MAC address from EEPROM before initializing the LwIP stack
   EEPROM_GetEUI48(EEPROM24AA_ADDRESS, MACAddrUser);
 
   lwrb_init(&ringbuffer, uart_rx_buffer_data, sizeof(uart_rx_buffer_data));
@@ -439,12 +447,13 @@ PUTCHAR_PROTOTYPE {
 /**
  * @note LXI Standard v1.5 - 2.4.5 LAN Configuration Initialize (LCI)
  * @note LXI Standard v1.5 - 2.4.5.1 LCI Mechanism ("LAN RESET" menu entry that, when activated, places its network settings in a default state)
+ * @todo implement network default settings
  */
 void LXI_LCI_Mechanism(void)
 {
-  deviceDHCPenabled = 1;
-  MX_LWIP_Deinit();
-  MX_LWIP_Reinit_DHCP();
+  deviceStatus_DHCPenabled = true;
+  //MX_LWIP_Deinit();
+  //MX_LWIP_Reinit_DHCP();
   printf("LCI: Init DHCP On\n");
 }
 /* USER CODE END 4 */
@@ -456,75 +465,106 @@ void LXI_LCI_Mechanism(void)
   * @retval None
   */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
-{
-  /* init code for LWIP */
-  MX_LWIP_Init();
-  /* USER CODE BEGIN 5 */
-  deviceDHCPenabled = 1;
-  uint8_t ipAddressPrinted = FALSE;
-  httpd_init();
-  myCGIinit();
-  mySSIinit();
+void StartDefaultTask(void *argument) {
+	/* init code for LWIP */
+	MX_LWIP_Init();
+	/* USER CODE BEGIN 5 */
+	deviceStatus_DHCPenabled = true;
+	bool ipAddressPrinted = false;
+	httpd_init();
+	myCGIinit();
+	mySSIinit();
 
-  // print PCB and Firmware Version
-  snprintf(_version_string, _LEN_VERSION_STR, "v%d.%d.%d (%s %s)", _VERSION_MAJOR, _VERSION_MINOR, _VERSION_PATCH, __DATE__, __TIME__);
-  printf("PCB rev. %s\n", _PCB_REVISION);
-  printf("%s\n", _version_string);
-  /* Infinite loop */
-  for(;;)
-  {
-	  // osDelay(1);
-	  // MX_LWIP_Process();  // not required
-	  /** @todo @bug custom init does not work */
-	  if(applyNewNetworkSettings){
-		  applyNewNetworkSettings = 0;
-		  ipAddressPrinted = 0;
-		  if(newDHCPStatus){
-			  deviceDHCPenabled = 1;
-			  MX_LWIP_Deinit();
-			  MX_LWIP_Reinit_DHCP();
-			  printf("Init DHCP On\n");
-		  } else {
-			  deviceDHCPenabled = 0;
-			  MX_LWIP_Deinit();
-			  MX_LWIP_Reinit_Manual(newIPaddr, newNetmask, newGateway);
-			  printf("Init DHCP Off\n");
-		  }
-	  }
+	// print PCB and Firmware Version
+	snprintf(_version_string, _LEN_VERSION_STR, "v%d.%d.%d (%s %s)",
+			_VERSION_MAJOR, _VERSION_MINOR, _VERSION_PATCH, __DATE__, __TIME__);
+	printf("PCB rev. %s\n", _PCB_REVISION);
+	printf("%s\n", _version_string);
+	/* Infinite loop */
+	for (;;) {
+		// osDelay(1);
+		// MX_LWIP_Process();  // not required
+
+		// Handle any changes in the Network settings
+		// save to EEPROM to recover settings after reboot
+		// @see https://lwip.fandom.com/wiki/IPv4
+
+		// @bug, does not work, manual IP is not set
+		if (applySettings_IPv4Addr) {
+			EEPROM_SaveIP(EEPROM24AA_REG_IP, newSettings_IPv4Addr);
+			ipv4_temp.addr = newSettings_IPv4Addr;
+			netif_set_ipaddr(&gnetif, &ipv4_temp);
+			applySettings_IPv4Addr = false;
+			ipAddressPrinted = false;
+
+			applySettings_DHCP = true;
+			newSettings_DHCPenabled = false;
+		}
+		if (applySettings_IPv4Gate) {
+			EEPROM_SaveIP(EEPROM24AA_REG_GATEWAY, newSettings_IPv4Gate);
+			ipv4_temp.addr = newSettings_IPv4Gate;
+			netif_set_gw(&gnetif, &ipv4_temp);
+			applySettings_IPv4Gate = false;
+		}
+		if (applySettings_IPv4Mask) {
+			EEPROM_SaveIP(EEPROM24AA_REG_SUBNET, newSettings_IPv4Addr);
+			ipv4_temp.addr = newSettings_IPv4Mask;
+			netif_set_netmask(&gnetif, &ipv4_temp);
+			applySettings_IPv4Mask = false;
+		}
+		if (applySettings_DHCP) {
+			applySettings_DHCP = false;
+			ipAddressPrinted = false;
+			EEPROM_SaveByte(EEPROM24AA_REG_DHCP_EN, newSettings_DHCPenabled);
+			if (newSettings_DHCPenabled) {
+				printf("Init DHCP On\n");
+				deviceStatus_DHCPenabled = true;
+				dhcp_start(&gnetif);
+			} else {
+				printf("Init DHCP Off\n");
+				deviceStatus_DHCPenabled = false;
+				dhcp_stop(&gnetif);
+			}
+		}
 
 		if (!ipAddressPrinted) {
 			if (!ip4_addr_isany(netif_ip4_addr(&gnetif))) {
-				deviceIPaddr = ip4_addr_get_u32(netif_ip4_addr(&gnetif));
+				deviceStatus_IPv4Addr = ip4_addr_get_u32(netif_ip4_addr(&gnetif));
+				deviceStatus_IPv4Gate = ip4_addr_get_u32(netif_ip4_gw(&gnetif));
+				deviceStatus_IPv4Mask = ip4_addr_get_u32(netif_ip4_netmask(&gnetif));
 				// print IP address
-				printf("IP %d.%d.%d.%d\n", (int)(deviceIPaddr & 0xff),
-						(int)((deviceIPaddr >> 8) & 0xff),
-						(int)((deviceIPaddr >> 16) & 0xff),
-						(int)(deviceIPaddr >> 24));
-				ipAddressPrinted = TRUE;
+				printf("IP %d.%d.%d.%d\n", (int) (deviceStatus_IPv4Addr & 0xff),
+						(int) ((deviceStatus_IPv4Addr >> 8) & 0xff),
+						(int) ((deviceStatus_IPv4Addr >> 16) & 0xff),
+						(int) (deviceStatus_IPv4Addr >> 24));
+				ipAddressPrinted = true;
 
 				// print PHY/MAC address
-				printf("MAC %02x:%02x:%02x:%02x:%02x:%02x\n",
-						MACAddrUser[0], MACAddrUser[1], MACAddrUser[2],
-						MACAddrUser[3], MACAddrUser[4], MACAddrUser[5]);
+				printf("MAC %02x:%02x:%02x:%02x:%02x:%02x\n", MACAddrUser[0],
+						MACAddrUser[1], MACAddrUser[2], MACAddrUser[3],
+						MACAddrUser[4], MACAddrUser[5]);
 			}
 		}
 
 		// Feed UART Rx data to SCPI_Input when a line end is detected in UART IRQ
-		if(flag_interpret_scpi){
-			flag_interpret_scpi = FALSE;
-			/** @todo : does this work without the temp buffer ? */
-			// use lwrb lenght as len
-			// use lwrb start char as pointer
-			// reset lwrb buffer afterwards
+		if (flag_uart_cmd_available) {
+			flag_uart_cmd_available = false;
+			/** @todo MUTEX for ringbuffer? */
+
 			uint8_t len = lwrb_get_full(&ringbuffer);
 			lwrb_read(&ringbuffer, temp, len);
 			SCPI_Input(&scpi_context_serial, temp, len);
+
+			/** @todo : does this work without the temp buffer ? */
+			// first character appears to be a '\n'  --> start at buff[1] does not work either
+			// lwrb_get_linear_block_read_address()
+			//SCPI_Input(&scpi_context_serial, (uint8_t*)&ringbuffer.buff[0], lwrb_get_full(&ringbuffer));
+			//lwrb_reset(&ringbuffer);
 		} else {
-			__HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);  // must be enabled again
+			__HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE); // make absolutely sure, this is enabled
 		}
-	  }
-  /* USER CODE END 5 */
+	}
+	/* USER CODE END 5 */
 }
 
 /**

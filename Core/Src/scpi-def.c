@@ -42,6 +42,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "scpi/scpi.h"
 #include "scpi-def.h"
 #include "lwip.h"
@@ -56,17 +57,23 @@
 
 /* External variables --------------------------------------------------------*/
 /* USER CODE BEGIN EV */
-
-extern uint32_t dacValue;
 extern struct netif gnetif;
 
-extern uint32_t deviceIPaddr;
-extern uint32_t newIPaddr;
-extern uint32_t newGateway;
-extern uint32_t newNetmask;
-extern uint8_t deviceDHCPenabled;
-extern uint8_t newDHCPStatus;
-extern uint8_t applyNewNetworkSettings;
+extern uint32_t deviceStatus_IPv4Addr;
+extern uint32_t deviceStatus_IPv4Mask;
+extern uint32_t deviceStatus_IPv4Gate;
+extern uint8_t deviceStatus_DHCPenabled;
+
+extern uint32_t newSettings_IPv4Addr;
+extern uint32_t newSettings_IPv4Gate;
+extern uint32_t newSettings_IPv4Mask;
+extern uint8_t newSettings_DHCPenabled;
+
+extern bool applySettings_DHCP;
+extern bool applySettings_IPv4Addr;
+extern bool applySettings_IPv4Mask;
+extern bool applySettings_IPv4Gate;
+
 extern uint8_t MACAddrUser[6];
 
 /* USER CODE END EV */
@@ -453,7 +460,7 @@ static scpi_result_t SYST_Comm_TcpIp_Ip(scpi_t * context) {
 	if(! ip4_addr_isany(&ipaddr)){
 		return SCPI_RES_ERR;
 	} */
-	newIPaddr = ipaddr.addr;
+	newSettings_IPv4Addr = ipaddr.addr;
 	scpi_write_ip_address(context, (uint32_t)ipaddr.addr);
     return SCPI_RES_OK;
 }
@@ -482,7 +489,7 @@ static scpi_result_t SYST_Comm_TcpIp_Mask(scpi_t * context) {
 	if(! ip4_addr_netmask_valid(ipaddr.addr)){
 		return SCPI_RES_ERR;
 	}
-	newNetmask = ipaddr.addr;
+	newSettings_IPv4Mask = ipaddr.addr;
 	scpi_write_ip_address(context, (uint32_t)ipaddr.addr);
     return SCPI_RES_OK;
 }
@@ -512,7 +519,7 @@ static scpi_result_t SYST_Comm_TcpIp_Gw(scpi_t * context) {
 	if(! ip4_addr_isany(&ipaddr)){
 		return SCPI_RES_ERR;
 	} */
-	newGateway = ipaddr.addr;
+	newSettings_IPv4Gate = ipaddr.addr;
 	scpi_write_ip_address(context, (uint32_t)ipaddr.addr);
     return SCPI_RES_OK;
 }
@@ -529,9 +536,9 @@ static scpi_result_t SYST_Comm_TcpIp_Dhcp(scpi_t * context) {
     if (!SCPI_ParamBool(context, &param1, TRUE)) {
         return SCPI_RES_ERR;
     }
-    if(param1 != deviceDHCPenabled){
-    	newDHCPStatus = param1;
-    	applyNewNetworkSettings = 1;
+    if(param1 != deviceStatus_DHCPenabled){
+    	newSettings_DHCPenabled = param1;
+    	applySettings_DHCP = 1;
     }
 
     return SCPI_RES_OK;
@@ -539,7 +546,7 @@ static scpi_result_t SYST_Comm_TcpIp_Dhcp(scpi_t * context) {
 
 static scpi_result_t SYST_Comm_TcpIp_DhcpQ(scpi_t * context) {
 
-    txlen = SCPI_Int32ToStr(deviceDHCPenabled, txbuf, 4);
+    txlen = SCPI_Int32ToStr(deviceStatus_DHCPenabled, txbuf, 4);
 	txbuf[txlen++] = '\r';
 	txbuf[txlen++] = '\n';
     context->interface->write(context, txbuf, txlen);

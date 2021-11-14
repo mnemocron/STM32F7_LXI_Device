@@ -12,14 +12,13 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 - ✅ DHCP IP Address Management
     + MCU continues to run even without active Ethernet connection
     + MCU connects to Network when pluged in via Ethernet
-- ✅ Telnet Echo Server on Port (23 / 5025)
-    + `$ > telnet 192.168.1.180 5025`
 - ✅ http web interface
     + ✅ has switches to turn on/off configurations
     + ✅ uses CGI/SSI
     + ⚠️ mandatory `/lxi/identification.xml` is present (but not detected by the LXI tool)
 - ✅ custom physical MAC address from within firmware
-
+    + ✅ unique EUI48 address is read from EEPROM
+- ✅ EEPROM to save/load user settings (IP, DHCP config ...)
 
 ---
 
@@ -54,32 +53,32 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 |:---:|:---:|:---:|:---:|
 | Todo | WIP | Debug (broken) | Done (working) |
 
-- 🔄 switching DHCP vs. MAnual IP
-    + ⚠️ CPU crashes when switching to static IP
-    + ⚠️ HardFault after calling tcpip_init() a 2nd time. Is there a way to deinit or reinit the tcp?
-    + ? not anymore: ⚠️ Assertion "no packet queues allowed!" failed at line 1009 in `../Middlewares/Third_Party/LwIP/src/core/ipv4/etharp.c`
-    + ❌ what is Auto-IP?
-        * lwip/dhcp opt.h suppors Auto Ip cooperation
+- 🔄 Bug disappeared: `:SYST:COMM:TCPIP:PHY?` query (over UART only) triggers HardFault
+    + is this really triggered by PHY? query
+- ❌ Webinterface / UART stop working after 1 min of operation: no HardFault, MCU keeps running
+- 🔄 switching DHCP vs. Manual IP
 - 🔄 implement EEPROM to store/load settings (at startup)
-    + 🔄 store DHCP on/off
-    + 🔄 store static IP address, mask and gateway
+    + ✅ store DHCP on/off
+    + ✅ store static IP address, mask and gateway
     + ✅ provide wrapper for user to store user settings
-- ⚠️ cgi / ssi now broken? with the LED
+    + 🔄 check and load at startup
 - 🔄 make dynamic version of `/lxi/identification.xml` with appropriate SSI implementation
     + https://www.nongnu.org/lwip/2_0_x/group__httpd.html
     + ✅ this requries a hack inside the `httpd.c` code to add "xml" as supported SSI file --> working now
-    + ⚠️ /lxi/identification now yields 404 ???
-    + 🔄 since the xml file contains `<!--comments-->` the LXI Discovery tool does not recognize the device anymore
+    + 🔄 (?) since the xml file contains `<!--comments-->` the LXI Discovery tool does not recognize the device anymore
     + 🔄 LXI Identification still unclear, lxi-tools vs. LXI Identification Tool do not behave the same
     + 🔄 pyvisa ResourceManager does not list the device
 - ❌ Add further `ASSERT()` statements throughout the code (e.g. for SSI)
 - ❌ author/licence/description header for each file
-- ❌ refactor variable/function names in `http_cgi_app.c`
-- ⚠️ `:SYST:COMM:TCPIP:PHY?` query (over UART only) triggers HardFault
 - ⚠️ sometimes UART does not react to SCPI commands (but keeps printing TCP/IP debug info)
-- ❌ cleanup spaghetti code of global variables, introduce hierarchy of config headers
+    + 🔄 is this resolved now?
+- 🔄 cleanup spaghetti code of global variables, introduce hierarchy of config headers
 - ❌ implement clear MVC structure for SCPI commands
-
+- ❌ add hislip compatibility
+- ❌ refactor/rename scpi_server.c to tcp/ip (does this have a name? VXI?)
+- ❌ use MUTEX for UART ringbuffer?
+- ❌ use SCPI_Result**** API as return throughout scpi User Code
+- ❌ replace printf with a custom funciton that can be enabled or disabled per define statement
 
 ---
 
