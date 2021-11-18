@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LXIDevice xmlns="http://www.lxistandard.org/InstrumentIdentification/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.lxistandard.org/InstrumentIdentification/1.0 LXIIdentification.xsd">
+    <Manufacturer>AnaPico AG</Manufacturer>
+    <Model>APVSG</Model>
+    <SerialNumber>000-0B0000000-0000</SerialNumber>
+    <FirmwareRevision>0.0.3b25v15</FirmwareRevision>
+    <ManufacturerDescription>Test and Measurement Device</ManufacturerDescription>
+    <HomepageURL>https://www.anapico.com/</HomepageURL>
+    <DriverURL>https://www.anapico.com//downloads</DriverURL>
+    <ConnectedDevices>
+        <DeviceURI>http://10.212.4.104/devices/device0/</DeviceURI>
+    </ConnectedDevices>
+    <UserDescription>Test and Measurement Device</UserDescription>
+    <IdentificationURL>http://10.212.4.104/lxi/identification</IdentificationURL>
+    <Interface xsi:type="NetworkInformation" InterfaceType="LXI" IPType="IPv4" InterfaceName="eth0">
+        <InstrumentAddressString>TCPIP::10.212.4.104::INSTR</InstrumentAddressString>
+        <InstrumentAddressString>TCPIP::10.212.4.104::18::SOCKET</InstrumentAddressString>
+        <Hostname>APVSG-0001</Hostname>
+        <IPAddress>10.212.4.104</IPAddress>
+        <SubnetMask>255.255.255.0</SubnetMask>
+        <MACAddress>8c:8e:76:00:00:00</MACAddress>
+        <Gateway></Gateway>
+        <DHCPEnabled>true</DHCPEnabled>
+        <AutoIPEnabled>true</AutoIPEnabled>
+    </Interface>
+    <IVISoftwareModuleName>Thingamajig</IVISoftwareModuleName>
+    <Extension>
+    </Extension>
+    <Domain>1</Domain>
+    <LXIVersion>1.5</LXIVersion>
+    <LXIExtendedFunctions>
+        <Function FunctionName="LXI VXI-11" Version="1.0" />
+    </LXIExtendedFunctions>
+</LXIDevice>

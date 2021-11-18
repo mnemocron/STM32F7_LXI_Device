@@ -53,32 +53,44 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 |:---:|:---:|:---:|:---:|
 | Todo | WIP | Debug (broken) | Done (working) |
 
-- 🔄 Bug disappeared: `:SYST:COMM:TCPIP:PHY?` query (over UART only) triggers HardFault
-    + is this really triggered by PHY? query
-- ❌ Webinterface / UART stop working after 1 min of operation: no HardFault, MCU keeps running
-- 🔄 switching DHCP vs. Manual IP
-- 🔄 implement EEPROM to store/load settings (at startup)
+#### Todo Critical
+
+- 🔄 [Feature] make dynamic version of `/lxi/identification.xml` with appropriate SSI implementation
+    + https://www.nongnu.org/lwip/2_0_x/group__httpd.html
+    + (?) reverse changes in `httpd.c` because SSI can be controlled by makefsdata
+    + (?) since the xml file contains `<!--comments-->` the LXI Discovery tool does not recognize the device anymore
+    + ⚠️ LXI Identification still unclear, lxi-tools vs. LXI Identification Tool do not behave the same
+    + Assertion "sys_timeout: timeout != NULL, pool MEMP_SYS_TIMEOUT is empty" failed at line 190 in ../Middlewares/Third_Party/LwIP/src/core/timeouts.c
+- 🔄 [Feature] switching DHCP vs. Manual IP
+
+
+
+#### Todo Whishlist
+
+- ❌ [Feature] function to check web connection status
+    + or callback handlers when connected / disconnected
+- 🔄 [Feature] implement NTP to set system time https://www.pool.ntp.org/zone/ch
+- 🔄 [Feature] implement EEPROM to store/load settings (at startup)
     + ✅ store DHCP on/off
     + ✅ store static IP address, mask and gateway
     + ✅ provide wrapper for user to store user settings
     + 🔄 check and load at startup
-- 🔄 make dynamic version of `/lxi/identification.xml` with appropriate SSI implementation
-    + https://www.nongnu.org/lwip/2_0_x/group__httpd.html
-    + ✅ this requries a hack inside the `httpd.c` code to add "xml" as supported SSI file --> working now
-    + 🔄 (?) since the xml file contains `<!--comments-->` the LXI Discovery tool does not recognize the device anymore
-    + 🔄 LXI Identification still unclear, lxi-tools vs. LXI Identification Tool do not behave the same
-    + 🔄 pyvisa ResourceManager does not list the device
-- ❌ Add further `ASSERT()` statements throughout the code (e.g. for SSI)
-- ❌ author/licence/description header for each file
-- ⚠️ sometimes UART does not react to SCPI commands (but keeps printing TCP/IP debug info)
-    + 🔄 is this resolved now?
-- 🔄 cleanup spaghetti code of global variables, introduce hierarchy of config headers
-- ❌ implement clear MVC structure for SCPI commands
-- ❌ add hislip compatibility
-- ❌ refactor/rename scpi_server.c to tcp/ip (does this have a name? VXI?)
-- ❌ use MUTEX for UART ringbuffer?
-- ❌ use SCPI_Result**** API as return throughout scpi User Code
-- ❌ replace printf with a custom funciton that can be enabled or disabled per define statement
+- ❌ [reliability] Add further `ASSERT()` statements throughout the code (e.g. for SSI)
+- ❌ [refactor] author/licence/description header for each file
+- 🔄 [refactor] cleanup spaghetti code of global variables, introduce hierarchy of config headers
+- ❌ [refactor] implement clear MVC structure for SCPI commands
+- ❌ [Feature] add hislip compatibility
+- ❌ [refactor] refactor/rename scpi_server.c to tcp/ip (does this have a name? VXI?)
+- ❌ [reliability] use MUTEX for UART ringbuffer?
+- ❌ [reliability] implement a memory monitor (FreeRTOS?) to check on heap/stack/RAM usage
+- ❌ [refactor] use SCPI_Result**** API as return throughout scpi User Code
+- ❌ [Feature] enable https within lwip
+- ❌ [Feature] enable web login
+    + probably not supported by LwIP, requires form post and session creation using a cookie in the post header
+    + password is stored on EEPROM
+    + redesign of web interface is required
+
+
 
 ---
 

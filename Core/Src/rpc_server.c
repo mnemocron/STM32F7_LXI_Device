@@ -62,6 +62,8 @@
  * @note  ip4_current_src_addr() only works within this udp_recv() function
  *        pcb->remote_ip and pcb->local_ip are both 0.0.0.0 (empty)
  * @see   https://github.com/lxi-tools/liblxi/blob/master/src/vxi11.c#L57
+ * @todo  understand and remove the warning :
+ *        https://stackoverflow.com/q/16831605/7469137
  */
 udp_recv_fn udp_echo_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port)
 {
@@ -88,6 +90,7 @@ udp_recv_fn udp_echo_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct
 		udp_sendto(pcb, p, ip4_current_src_addr(), port); // reply to source IP + port
 		pbuf_free(p); //De-allocate packet buffer
 	}
+	return (udp_recv_fn)0;
 }
 
 void rpc_server_thread( void *arg ) {
@@ -97,7 +100,7 @@ void rpc_server_thread( void *arg ) {
 
 	ptel_pcb = udp_new();
 	udp_bind(ptel_pcb, IP_ADDR_ANY, 111);
-	udp_recv(ptel_pcb, udp_echo_recv, NULL);
+	udp_recv(ptel_pcb, (udp_recv_fn)udp_echo_recv, (void*)NULL);
 
 	while (1) {
 		vTaskDelay(200); //some delay!

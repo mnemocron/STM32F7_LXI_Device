@@ -32,6 +32,7 @@ Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang \
 Middlewares/Third_Party/LwIP/src/api \
 Middlewares/Third_Party/LwIP/src/apps/http \
 Middlewares/Third_Party/LwIP/src/apps/mqtt \
+Middlewares/Third_Party/LwIP/src/apps/sntp \
 Middlewares/Third_Party/LwIP/src/core \
 Middlewares/Third_Party/LwIP/src/core/ipv4 \
 Middlewares/Third_Party/LwIP/src/core/ipv6 \

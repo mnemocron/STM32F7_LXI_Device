@@ -15,6 +15,10 @@
   *                        opensource.org/licenses/BSD-3-Clause
   *
   ******************************************************************************
+  *
+  * @see https://lwip.fandom.com/wiki/IPv4
+  *
+  ******************************************************************************
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
@@ -24,7 +28,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>   // printf ( linker flag: "-u _printf_float" uses 7kB memory)
+#include <stdio.h>
 #include <stdbool.h>
 #include "scpi/scpi.h"          // SCPI Library
 #include "scpi-def.h"           // SCPI User Code
@@ -34,6 +38,7 @@
 #include "lwip/apps/httpd.h"    // http Library
 #include "scpi_server.h"        // TCP/IP server for SCPI input
 #include "rpc_server.h"         // LXI discovery service
+#include "lwip/apps/sntp.h"     // SNTP API for time keeping
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,6 +48,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ENABLE_DEBUG_PRINTF 0
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -439,9 +445,23 @@ static void MX_GPIO_Init(void)
 PUTCHAR_PROTOTYPE {
 	/* Place your implementation of fputc here */
 	/* e.g. write a character to the EVAL_COM1 and Loop until the end of transmission */
+#ifdef ENABLE_DEBUG_PRINTF
 	HAL_UART_Transmit(&huart3, (uint8_t*) &ch, 1, 1);
+#endif
 	// while(!(CDC_Transmit_FS((uint8_t*)&ch, 1) == USBD_BUSY));
 	return ch;
+}
+
+/**
+ * @brief callback funtion to set system time from NTP server
+ * @param sec timestamp in seconds
+ * @param us  additional microseconds
+ * @see   sntp.c:139
+ * @see   sntp_opts.h:56
+ * @todo  implement RTC callback
+ */
+void SNTP_RTC_callback(uint32_t sec, uint32_t us){
+	printf("NTP: %d\n", (int)sec);
 }
 
 /**
@@ -465,31 +485,52 @@ void LXI_LCI_Mechanism(void)
   * @retval None
   */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument) {
-	/* init code for LWIP */
-	MX_LWIP_Init();
-	/* USER CODE BEGIN 5 */
+void StartDefaultTask(void *argument)
+{
+  /* init code for LWIP */
+  MX_LWIP_Init();
+  /* USER CODE BEGIN 5 */
 	deviceStatus_DHCPenabled = true;
+	// if DHCP was previously disabled, use the settings from the EEPROM
+	EEPROM_ReadByte(EEPROM24AA_REG_DHCP_EN, deviceStatus_DHCPenabled);
+	if(!deviceStatus_DHCPenabled){
+		EEPROM_ReadIP(EEPROM24AA_REG_IP, newSettings_IPv4Addr);
+		EEPROM_ReadIP(EEPROM24AA_REG_GATEWAY, newSettings_IPv4Gate);
+		EEPROM_ReadIP(EEPROM24AA_REG_SUBNET, newSettings_IPv4Mask);
+		// @todo add further validation for IP / gateway addresses
+		if(ip4_addr_netmask_valid(newSettings_IPv4Mask)){
+			applySettings_IPv4Mask = true;
+			applySettings_IPv4Addr = true;
+			applySettings_IPv4Gate = true;
+		} else {
+			deviceStatus_DHCPenabled = true;  // revert back to DHCP
+		}
+	}
+
 	bool ipAddressPrinted = false;
 	httpd_init();
 	myCGIinit();
 	mySSIinit();
+
+	/* Configure and start the SNTP client */
+	/* @see https://www.pool.ntp.org/zone/ch */
+	sntp_setoperatingmode(SNTP_OPMODE_POLL);
+	sntp_setservername(0, "pool.ntp.org");
+	sntp_setservername(1, "2.ch.pool.ntp.org");
+	sntp_init();
 
 	// print PCB and Firmware Version
 	snprintf(_version_string, _LEN_VERSION_STR, "v%d.%d.%d (%s %s)",
 			_VERSION_MAJOR, _VERSION_MINOR, _VERSION_PATCH, __DATE__, __TIME__);
 	printf("PCB rev. %s\n", _PCB_REVISION);
 	printf("%s\n", _version_string);
+
 	/* Infinite loop */
 	for (;;) {
 		// osDelay(1);
-		// MX_LWIP_Process();  // not required
 
 		// Handle any changes in the Network settings
 		// save to EEPROM to recover settings after reboot
-		// @see https://lwip.fandom.com/wiki/IPv4
-
-		// @bug, does not work, manual IP is not set
 		if (applySettings_IPv4Addr) {
 			EEPROM_SaveIP(EEPROM24AA_REG_IP, newSettings_IPv4Addr);
 			ipv4_temp.addr = newSettings_IPv4Addr;
@@ -497,8 +538,13 @@ void StartDefaultTask(void *argument) {
 			applySettings_IPv4Addr = false;
 			ipAddressPrinted = false;
 
-			applySettings_DHCP = true;
-			newSettings_DHCPenabled = false;
+			printf("IP %d.%d.%d.%d\n", (int) (newSettings_IPv4Addr & 0xff),
+					(int) ((newSettings_IPv4Addr >> 8) & 0xff),
+					(int) ((newSettings_IPv4Addr >> 16) & 0xff),
+					(int) (newSettings_IPv4Addr >> 24));
+
+			// applySettings_DHCP = true;
+			// newSettings_DHCPenabled = false;
 		}
 		if (applySettings_IPv4Gate) {
 			EEPROM_SaveIP(EEPROM24AA_REG_GATEWAY, newSettings_IPv4Gate);
@@ -523,7 +569,7 @@ void StartDefaultTask(void *argument) {
 			} else {
 				printf("Init DHCP Off\n");
 				deviceStatus_DHCPenabled = false;
-				dhcp_stop(&gnetif);
+				dhcp_stop(&gnetif);  // will reset IP+mask+GW
 			}
 		}
 
@@ -564,7 +610,7 @@ void StartDefaultTask(void *argument) {
 			__HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE); // make absolutely sure, this is enabled
 		}
 	}
-	/* USER CODE END 5 */
+  /* USER CODE END 5 */
 }
 
 /**

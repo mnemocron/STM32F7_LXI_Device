@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LXIDevice xmlns="http://www.lxistandard.org/InstrumentIdentification/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.lxistandard.org/InstrumentIdentification/1.0 http://192.168.1.142/lxi/identification/LXIIdentification.xsd">
+    <Manufacturer>RIGOL TECHNOLOGIES</Manufacturer>
+    <Model>DS1104Z Plus</Model>
+    <SerialNumber>DS1ZC000000000</SerialNumber>
+    <FirmwareRevision>-75</FirmwareRevision>
+    <ManufacturerDescription>Rigol</ManufacturerDescription>
+    <HomepageURL>http://www.rigol.com</HomepageURL>
+    <DriverURL>http://www.rigol.com</DriverURL>
+    <UserDescription>RGLAN Identification Schema</UserDescription>
+    <IdentificationURL>http://192.168.1.142/lxi/identification</IdentificationURL>
+    <Interface xsi:type="NetworkInformation" InterfaceType="LXI" IPType="IPv4" InterfaceName="eth0">
+        <InstrumentAddressString>TCPIP0::192.168.1.142::INSTR</InstrumentAddressString>
+        <InstrumentAddressString>TCPIP0::192.168.1.142::5555::SOCKET</InstrumentAddressString>
+        <Hostname>192.168.1.142</Hostname>
+        <IPAddress>192.168.1.142</IPAddress>
+        <SubnetMask>255.255.255.0</SubnetMask>
+        <MACAddress>00-19-FFFFFFAF-00-00-00</MACAddress>
+        <Gateway>192.168.1.1</Gateway>
+        <DHCPEnabled>true</DHCPEnabled>
+        <AutoIPEnabled>true</AutoIPEnabled>
+    </Interface>
+    <Interface InterfaceType="Rigol Custom Network Interface" InterfaceName="LAN">
+        <InstrumentAddressString>192.168.1.142</InstrumentAddressString>
+    </Interface>
+    <IVISoftwareModuleName>RGLAN</IVISoftwareModuleName>
+    <Domain>1</Domain>
+    <LXIVersion>1.4</LXIVersion>
+</LXIDevice>

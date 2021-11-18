@@ -282,7 +282,6 @@ static scpi_result_t TEST_Chanlst(scpi_t *context) {
 
     /* get channel list */
     if (SCPI_Parameter(context, &channel_list_param, TRUE)) {
-        scpi_expr_result_t res;
         scpi_bool_t is_range;
         int32_t values_from[MAXDIM];
         int32_t values_to[MAXDIM];
@@ -298,7 +297,7 @@ static scpi_result_t TEST_Chanlst(scpi_t *context) {
             chanlst_idx = 0; /* call first index */
             arr_idx = 0; /* set arr_idx to 0 */
             do { /* if valid, iterate over channel_list_param index while res == valid (do-while cause we have to do it once) */
-                res = SCPI_ExprChannelListEntry(context, &channel_list_param, chanlst_idx, &is_range, values_from, values_to, 4, &dimensions);
+                SCPI_ExprChannelListEntry(context, &channel_list_param, chanlst_idx, &is_range, values_from, values_to, 4, &dimensions);
                 if (is_range == FALSE) { /* still can have multiple dimensions */
                     if (dimensions == 1) {
                         /* here we have our values
@@ -461,6 +460,7 @@ static scpi_result_t SYST_Comm_TcpIp_Ip(scpi_t * context) {
 		return SCPI_RES_ERR;
 	} */
 	newSettings_IPv4Addr = ipaddr.addr;
+	applySettings_IPv4Addr = true;
 	scpi_write_ip_address(context, (uint32_t)ipaddr.addr);
     return SCPI_RES_OK;
 }
@@ -490,6 +490,7 @@ static scpi_result_t SYST_Comm_TcpIp_Mask(scpi_t * context) {
 		return SCPI_RES_ERR;
 	}
 	newSettings_IPv4Mask = ipaddr.addr;
+	applySettings_IPv4Mask = true;
 	scpi_write_ip_address(context, (uint32_t)ipaddr.addr);
     return SCPI_RES_OK;
 }
@@ -520,6 +521,7 @@ static scpi_result_t SYST_Comm_TcpIp_Gw(scpi_t * context) {
 		return SCPI_RES_ERR;
 	} */
 	newSettings_IPv4Gate = ipaddr.addr;
+	applySettings_IPv4Gate = true;
 	scpi_write_ip_address(context, (uint32_t)ipaddr.addr);
     return SCPI_RES_OK;
 }

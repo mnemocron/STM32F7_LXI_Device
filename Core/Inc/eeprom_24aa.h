@@ -35,8 +35,8 @@ extern I2C_HandleTypeDef hi2c1;
 /* MACROS */
 #define EEPROM_GetEUI48(adr, dst) HAL_I2C_Mem_Read(&hi2c1, adr, 0xFA, sizeof(uint8_t), dst, 6, 100);
 
-#define EEPROM_SaveByte(adr, b)   HAL_I2C_Mem_Write( &hi2c1, EEPROM24AA_ADDRESS, adr, sizeof(uint8_t), &b, 1, 10);
-#define EEPROM_ReadByte(adr, b)   HAL_I2C_Mem_Read ( &hi2c1, EEPROM24AA_ADDRESS, adr, sizeof(uint8_t), &b, 1, 10);
+#define EEPROM_SaveByte(adr, b)   HAL_I2C_Mem_Write( &hi2c1, EEPROM24AA_ADDRESS, adr, sizeof(uint8_t), (uint8_t*)&b, 1, 10);
+#define EEPROM_ReadByte(adr, b)   HAL_I2C_Mem_Read ( &hi2c1, EEPROM24AA_ADDRESS, adr, sizeof(uint8_t), (uint8_t*)&b, 1, 10);
 
 #define EEPROM_SaveIP(adr, ip)    HAL_I2C_Mem_Write( &hi2c1, EEPROM24AA_ADDRESS, adr, sizeof(uint8_t), (uint8_t*)&ip, 4, 10);
 #define EEPROM_ReadIP(adr, ip)    HAL_I2C_Mem_Read ( &hi2c1, EEPROM24AA_ADDRESS, adr, sizeof(uint8_t), (uint8_t*)&ip, 4, 10);

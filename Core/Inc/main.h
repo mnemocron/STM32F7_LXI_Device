@@ -55,7 +55,7 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+void SNTP_RTC_callback(uint32_t, uint32_t);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

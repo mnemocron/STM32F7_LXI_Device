@@ -54,6 +54,7 @@
 "./Middlewares/Third_Party/LwIP/src/apps/http/fs.o"
 "./Middlewares/Third_Party/LwIP/src/apps/http/httpd.o"
 "./Middlewares/Third_Party/LwIP/src/apps/mqtt/mqtt.o"
+"./Middlewares/Third_Party/LwIP/src/apps/sntp/sntp.o"
 "./Middlewares/Third_Party/LwIP/src/core/altcp.o"
 "./Middlewares/Third_Party/LwIP/src/core/altcp_alloc.o"
 "./Middlewares/Third_Party/LwIP/src/core/altcp_tcp.o"
