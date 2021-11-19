@@ -4,8 +4,8 @@
  *              unique internal EUI48 (MAC address)
  * @version
  * @author      Simon Burkhardt
- * @date        2021-10-13
- * @copyright   (c) 2020 eta systems GmbH
+ * @date        2021-11-19
+ * @copyright   (c) 2021 eta systems GmbH
 *******************************************************************************/
 
 /*
@@ -22,24 +22,33 @@
 #ifndef _EEPROM_24AA_H
 #define	_EEPROM_24AA_H
 
-#include "stm32f7xx_hal_i2c.h"
+#include "stm32f7xx_hal.h"
 extern I2C_HandleTypeDef hi2c1;
 
 /* DEFINES */
 #define EEPROM24AA_ADDRESS 0xA0  // as tested 0xA0 ... 0xAF
-#define EEPROM24AA_REG_DHCP_EN 0x00
 #define EEPROM24AA_REG_IP      0x10
 #define EEPROM24AA_REG_GATEWAY 0x14
 #define EEPROM24AA_REG_SUBNET  0x18
+#define EEPROM24AA_REG_DHCP_EN 0x1B
 
-/* MACROS */
-#define EEPROM_GetEUI48(adr, dst) HAL_I2C_Mem_Read(&hi2c1, adr, 0xFA, sizeof(uint8_t), dst, 6, 100);
+#define EEPROM24AA_TIMEOUT     100 // HAL_MAX_DELAY
 
-#define EEPROM_SaveByte(adr, b)   HAL_I2C_Mem_Write( &hi2c1, EEPROM24AA_ADDRESS, adr, sizeof(uint8_t), (uint8_t*)&b, 1, 10);
-#define EEPROM_ReadByte(adr, b)   HAL_I2C_Mem_Read ( &hi2c1, EEPROM24AA_ADDRESS, adr, sizeof(uint8_t), (uint8_t*)&b, 1, 10);
+// #define EEPROM24AA_PRINT_DEBUG
 
-#define EEPROM_SaveIP(adr, ip)    HAL_I2C_Mem_Write( &hi2c1, EEPROM24AA_ADDRESS, adr, sizeof(uint8_t), (uint8_t*)&ip, 4, 10);
-#define EEPROM_ReadIP(adr, ip)    HAL_I2C_Mem_Read ( &hi2c1, EEPROM24AA_ADDRESS, adr, sizeof(uint8_t), (uint8_t*)&ip, 4, 10);
+/* Macros */
+#define _EEPROM_GetEUI48(adr, dst) HAL_I2C_Mem_Read(&hi2c1, adr, 0xFA, sizeof(uint8_t), dst, 6, EEPROM24AA_TIMEOUT);
+#define _EEPROM_SaveByte(adr, b)   HAL_I2C_Mem_Write( &hi2c1, EEPROM24AA_ADDRESS, adr, sizeof(uint8_t), (uint8_t*)&b, 1, EEPROM24AA_TIMEOUT);
+#define _EEPROM_ReadByte(adr, b)   HAL_I2C_Mem_Read ( &hi2c1, EEPROM24AA_ADDRESS, adr, sizeof(uint8_t), (uint8_t*)&b, 1, EEPROM24AA_TIMEOUT);
+#define _EEPROM_SaveIP(adr, ip)    HAL_I2C_Mem_Write( &hi2c1, EEPROM24AA_ADDRESS, adr, sizeof(uint8_t), (uint8_t*)&ip, 4, EEPROM24AA_TIMEOUT);
+#define _EEPROM_ReadIP(adr, ip)    HAL_I2C_Mem_Read ( &hi2c1, EEPROM24AA_ADDRESS, adr, sizeof(uint8_t), (uint8_t*)&ip, 4, EEPROM24AA_TIMEOUT);
+
+/* Function Prototypes */
+void    EEPROM_SaveByte(uint8_t adr, uint8_t b);
+uint8_t  EEPROM_ReadByte(uint8_t adr);
+void    EEPROM_SaveIP(uint8_t adr, uint32_t ip);
+uint32_t EEPROM_ReadIP(uint8_t adr);
+
 
 /*
 HAL_I2C_Mem_Write( &hi2c1, EEPROM24AA_ADDRESS, MEMORY_ADDRESS, sizeof(uint8_t), src, length, 1000);

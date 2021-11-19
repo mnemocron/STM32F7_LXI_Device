@@ -19,6 +19,7 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 - ✅ custom physical MAC address from within firmware
     + ✅ unique EUI48 address is read from EEPROM
 - ✅ EEPROM to save/load user settings (IP, DHCP config ...)
+- ✅ Settings allow to enable/disable DHCP + AutoIP or manual settings (IP/Netmask/Gateway)
 
 ---
 
@@ -61,20 +62,11 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
     + (?) since the xml file contains `<!--comments-->` the LXI Discovery tool does not recognize the device anymore
     + ⚠️ LXI Identification still unclear, lxi-tools vs. LXI Identification Tool do not behave the same
     + Assertion "sys_timeout: timeout != NULL, pool MEMP_SYS_TIMEOUT is empty" failed at line 190 in ../Middlewares/Third_Party/LwIP/src/core/timeouts.c
-- 🔄 [Feature] switching DHCP vs. Manual IP
-
-
 
 #### Todo Whishlist
 
 - ❌ [Feature] function to check web connection status
     + or callback handlers when connected / disconnected
-- 🔄 [Feature] implement NTP to set system time https://www.pool.ntp.org/zone/ch
-- 🔄 [Feature] implement EEPROM to store/load settings (at startup)
-    + ✅ store DHCP on/off
-    + ✅ store static IP address, mask and gateway
-    + ✅ provide wrapper for user to store user settings
-    + 🔄 check and load at startup
 - ❌ [reliability] Add further `ASSERT()` statements throughout the code (e.g. for SSI)
 - ❌ [refactor] author/licence/description header for each file
 - 🔄 [refactor] cleanup spaghetti code of global variables, introduce hierarchy of config headers

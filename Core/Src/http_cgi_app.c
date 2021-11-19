@@ -73,7 +73,7 @@ const char* settings_CGI_Handler(int iIndex, int iNumParams, char *pcParam[],
 	return "/index.shtml";
 }
 
-void myCGIinit(void) {
+void webCGIinit(void) {
 	//add LED control CGI to the table
 	theCGItable[0] = settingsCGI;
 	//give the table to the HTTP server
@@ -248,7 +248,7 @@ u16_t lxiSSIHandler(
 	return 0;
 }
 
-void mySSIinit(void) {
+void webSSIinit(void) {
 	// ./index.html page
 	//http_set_ssi_handler(defaultSSIHandler, (char const**) theSSItags, numSSItags);
 

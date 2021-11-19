@@ -22,12 +22,18 @@ Switching between DHCP and manual IP
 - from manual IP mode, the DHCP can be enabled again and the device negociates a new IP without crashing
 
 
+---
+
+:SYST:COMM:TCPIP:DHCP 0
+:SYST:COMM:TCPIP:IP "192.168.1.173"
+:SYST:COMM:TCPIP:MASK "255.255.255.0"
+:SYST:COMM:TCPIP:GATE "192.168.1.1"
 
 
-
-
-
-
+:MEM:IP?
+:MEM:DHCP?
+:MEM:MASK?
+:MEM:GATE?
 
 
 

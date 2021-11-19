@@ -24,15 +24,15 @@
  </tr>
  <tr class="btn">
   <th>Model</th>
-  <td>Relay Switch Box</td>
+  <td>LXI Remote Demo</td>
  </tr>
  <tr class="btn">
   <th>S/N</th>
-  <td>42-100.000.000-A2021</td>
+  <td><!--#lxi0--></td>
  </tr>
  <tr class="btn">
   <th>Firmware</th>
-  <td>0.0.03b21v3</td>
+  <td><!--#lxi1--></td>
  </tr>
 </tbody>
 </table>

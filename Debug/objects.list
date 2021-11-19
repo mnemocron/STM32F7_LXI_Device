@@ -1,3 +1,5 @@
+"./Core/Src/ds3231.o"
+"./Core/Src/eeprom_24aa.o"
 "./Core/Src/freertos.o"
 "./Core/Src/http_cgi_app.o"
 "./Core/Src/main.o"

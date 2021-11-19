@@ -39,6 +39,7 @@
 #include "scpi_server.h"        // TCP/IP server for SCPI input
 #include "rpc_server.h"         // LXI discovery service
 #include "lwip/apps/sntp.h"     // SNTP API for time keeping
+#include "ds3231.h"             // precision RTC on I2C
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -102,6 +103,19 @@ bool deviceStatus_DHCPenabled = false;
 char _version_string[32];  // Firmware Version
 
 ip4_addr_t ipv4_temp;
+
+void printr(uint8_t reg) {
+	printf("Reg 0x%02x = ", reg);
+	uint8_t val;
+	HAL_I2C_Master_Transmit(_ds3231_ui2c, DS3231_I2C_ADDR << 1, &reg, 1, DS3231_TIMEOUT);
+	HAL_StatusTypeDef s = HAL_I2C_Master_Receive(_ds3231_ui2c,
+			DS3231_I2C_ADDR << 1, &val, 1, DS3231_TIMEOUT);
+	for (uint8_t i = 0; i < 8; i++) {
+		printf("%d", (val >> (7 - i)) & 1);
+	}
+	printf(" With status %d", s);
+	printf("\n");
+}
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -161,7 +175,15 @@ int main(void)
   MACAddrUser[5] = 0xee;
 
   // read EUI48 compatible MAC address from EEPROM before initializing the LwIP stack
-  EEPROM_GetEUI48(EEPROM24AA_ADDRESS, MACAddrUser);
+  _EEPROM_GetEUI48(EEPROM24AA_ADDRESS, MACAddrUser);
+
+  // I2C_ScanAddresses(&hi2c1);
+
+  /** @todo - test with working module
+  DS3231_Init(&hi2c1);
+  DS3231_SetFullTime(11, 15, 50);
+  DS3231_SetFullDate(19, 11, 5, 2021);
+  */
 
   lwrb_init(&ringbuffer, uart_rx_buffer_data, sizeof(uart_rx_buffer_data));
 
@@ -476,6 +498,79 @@ void LXI_LCI_Mechanism(void)
   //MX_LWIP_Reinit_DHCP();
   printf("LCI: Init DHCP On\n");
 }
+
+void I2C_ScanAddresses(I2C_HandleTypeDef *hi2c){
+    uint8_t error, address;
+    uint16_t nDevices;
+    nDevices = 0;
+    printf("Scanning for available I2C devices...");
+    for(address = 0; address < 255; address++ )
+    {
+        HAL_Delay(10);
+        error = HAL_I2C_Master_Transmit(hi2c, address, 0x00, 1, 1);
+        //error = HAL_I2C_Master_Receive(hi2c, address, 0x00, 1, 1);
+        if (error == HAL_OK)
+        {
+            printf("I2C device found at address 0x%02X!\n", address);
+            nDevices++;
+        }
+    }
+    if (nDevices == 0)
+        printf("No I2C devices found\n");
+    else
+        printf("done\n");
+}
+
+void IP_Settings_Apply(bool* flag, uint32_t* ip, uint8_t reg)
+{
+	if(*flag){
+		*flag = false;
+		ipv4_temp.addr = *ip;  // store new ip to temp struct
+		if(reg == EEPROM24AA_REG_IP){
+			EEPROM_SaveIP(EEPROM24AA_REG_IP, *ip);
+			netif_set_ipaddr(&gnetif, &ipv4_temp);
+			//ipAddressPrinted = false;
+		}
+		if(reg == EEPROM24AA_REG_GATEWAY){
+			EEPROM_SaveIP(EEPROM24AA_REG_GATEWAY, *ip);
+			netif_set_gw(&gnetif, &ipv4_temp);
+			//ipAddressPrinted = false;
+		}
+		if(reg == EEPROM24AA_REG_SUBNET){
+			EEPROM_SaveIP(EEPROM24AA_REG_SUBNET, *ip);
+			netif_set_netmask(&gnetif, &ipv4_temp);
+			//ipAddressPrinted = false;
+		}
+		printf("[set] %d.%d.%d.%d\n", (int)(*ip&0xff),(int)((*ip>>8)&0xff),(int)((*ip>>16)&0xff),(int)(*ip>>24));
+	}
+}
+
+void DHCP_Settings_Apply(bool* flag, bool* en, uint8_t reg)
+{
+	if(*flag){
+		*flag = false;
+		//ipAddressPrinted = false;
+		EEPROM_SaveByte(reg, *en);
+		if (*en) {
+			deviceStatus_DHCPenabled = true;
+			dhcp_start(&gnetif);
+		} else {
+			deviceStatus_DHCPenabled = false;
+			dhcp_stop(&gnetif);  // will reset IP + mask + GW
+
+			osDelay(5);
+			newSettings_IPv4Addr = EEPROM_ReadIP(EEPROM24AA_REG_IP);
+			osDelay(5);
+			newSettings_IPv4Mask = EEPROM_ReadIP(EEPROM24AA_REG_SUBNET);
+			osDelay(5);
+			newSettings_IPv4Gate = EEPROM_ReadIP(EEPROM24AA_REG_GATEWAY);
+
+			applySettings_IPv4Addr = true;
+			applySettings_IPv4Gate = true;
+			applySettings_IPv4Mask = true;
+		}
+	}
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -492,25 +587,30 @@ void StartDefaultTask(void *argument)
   /* USER CODE BEGIN 5 */
 	deviceStatus_DHCPenabled = true;
 	// if DHCP was previously disabled, use the settings from the EEPROM
-	EEPROM_ReadByte(EEPROM24AA_REG_DHCP_EN, deviceStatus_DHCPenabled);
+	osDelay(5);
+	deviceStatus_DHCPenabled = EEPROM_ReadByte(EEPROM24AA_REG_DHCP_EN);
 	if(!deviceStatus_DHCPenabled){
-		EEPROM_ReadIP(EEPROM24AA_REG_IP, newSettings_IPv4Addr);
-		EEPROM_ReadIP(EEPROM24AA_REG_GATEWAY, newSettings_IPv4Gate);
-		EEPROM_ReadIP(EEPROM24AA_REG_SUBNET, newSettings_IPv4Mask);
+		dhcp_stop(&gnetif);
+		osDelay(5);
+		newSettings_IPv4Addr = EEPROM_ReadIP(EEPROM24AA_REG_IP);
+		osDelay(5);
+		newSettings_IPv4Gate = EEPROM_ReadIP(EEPROM24AA_REG_GATEWAY);
+		osDelay(5);
+		newSettings_IPv4Mask = EEPROM_ReadIP(EEPROM24AA_REG_SUBNET);
 		// @todo add further validation for IP / gateway addresses
 		if(ip4_addr_netmask_valid(newSettings_IPv4Mask)){
 			applySettings_IPv4Mask = true;
 			applySettings_IPv4Addr = true;
 			applySettings_IPv4Gate = true;
 		} else {
-			deviceStatus_DHCPenabled = true;  // revert back to DHCP
+			// deviceStatus_DHCPenabled = true;  // revert back to DHCP
 		}
 	}
 
 	bool ipAddressPrinted = false;
 	httpd_init();
-	myCGIinit();
-	mySSIinit();
+	webCGIinit();
+	webSSIinit();
 
 	/* Configure and start the SNTP client */
 	/* @see https://www.pool.ntp.org/zone/ch */
@@ -519,11 +619,22 @@ void StartDefaultTask(void *argument)
 	sntp_setservername(1, "2.ch.pool.ntp.org");
 	sntp_init();
 
-	// print PCB and Firmware Version
+	// build firmware version string
+#ifdef INCLUDE_DATE_IN_VERSION_STRING
 	snprintf(_version_string, _LEN_VERSION_STR, "v%d.%d.%d (%s %s)",
 			_VERSION_MAJOR, _VERSION_MINOR, _VERSION_PATCH, __DATE__, __TIME__);
+#else
+	snprintf(_version_string, _LEN_VERSION_STR, "v%d.%d.%d",
+			_VERSION_MAJOR, _VERSION_MINOR, _VERSION_PATCH);
+#endif
+
+#ifdef PRINT_ETA_SERIAL_STRING
 	printf("PCB rev. %s\n", _PCB_REVISION);
-	printf("%s\n", _version_string);
+#endif
+
+#ifdef PRINT_ETA_VERSION_STRING
+	printf("Firmware %s\n", _version_string);
+#endif
 
 	/* Infinite loop */
 	for (;;) {
@@ -531,47 +642,10 @@ void StartDefaultTask(void *argument)
 
 		// Handle any changes in the Network settings
 		// save to EEPROM to recover settings after reboot
-		if (applySettings_IPv4Addr) {
-			EEPROM_SaveIP(EEPROM24AA_REG_IP, newSettings_IPv4Addr);
-			ipv4_temp.addr = newSettings_IPv4Addr;
-			netif_set_ipaddr(&gnetif, &ipv4_temp);
-			applySettings_IPv4Addr = false;
-			ipAddressPrinted = false;
-
-			printf("IP %d.%d.%d.%d\n", (int) (newSettings_IPv4Addr & 0xff),
-					(int) ((newSettings_IPv4Addr >> 8) & 0xff),
-					(int) ((newSettings_IPv4Addr >> 16) & 0xff),
-					(int) (newSettings_IPv4Addr >> 24));
-
-			// applySettings_DHCP = true;
-			// newSettings_DHCPenabled = false;
-		}
-		if (applySettings_IPv4Gate) {
-			EEPROM_SaveIP(EEPROM24AA_REG_GATEWAY, newSettings_IPv4Gate);
-			ipv4_temp.addr = newSettings_IPv4Gate;
-			netif_set_gw(&gnetif, &ipv4_temp);
-			applySettings_IPv4Gate = false;
-		}
-		if (applySettings_IPv4Mask) {
-			EEPROM_SaveIP(EEPROM24AA_REG_SUBNET, newSettings_IPv4Addr);
-			ipv4_temp.addr = newSettings_IPv4Mask;
-			netif_set_netmask(&gnetif, &ipv4_temp);
-			applySettings_IPv4Mask = false;
-		}
-		if (applySettings_DHCP) {
-			applySettings_DHCP = false;
-			ipAddressPrinted = false;
-			EEPROM_SaveByte(EEPROM24AA_REG_DHCP_EN, newSettings_DHCPenabled);
-			if (newSettings_DHCPenabled) {
-				printf("Init DHCP On\n");
-				deviceStatus_DHCPenabled = true;
-				dhcp_start(&gnetif);
-			} else {
-				printf("Init DHCP Off\n");
-				deviceStatus_DHCPenabled = false;
-				dhcp_stop(&gnetif);  // will reset IP+mask+GW
-			}
-		}
+		IP_Settings_Apply(&applySettings_IPv4Addr, &newSettings_IPv4Addr, EEPROM24AA_REG_IP     );
+		IP_Settings_Apply(&applySettings_IPv4Mask, &newSettings_IPv4Mask, EEPROM24AA_REG_SUBNET );
+		IP_Settings_Apply(&applySettings_IPv4Gate, &newSettings_IPv4Gate, EEPROM24AA_REG_GATEWAY);
+		DHCP_Settings_Apply(&applySettings_DHCP  , &newSettings_DHCPenabled, EEPROM24AA_REG_DHCP_EN);
 
 		if (!ipAddressPrinted) {
 			if (!ip4_addr_isany(netif_ip4_addr(&gnetif))) {

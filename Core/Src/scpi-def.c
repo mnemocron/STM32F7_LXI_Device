@@ -46,6 +46,7 @@
 #include "scpi/scpi.h"
 #include "scpi-def.h"
 #include "lwip.h"
+#include "eeprom_24aa.h"
 
 /* USER CODE END Includes */
 
@@ -408,6 +409,49 @@ static scpi_result_t TEST_Chanlst(scpi_t *context) {
 }
 
 /**
+ * @brief reads the IP address stored on EEPROM
+ */
+static scpi_result_t MEM_eeprom_IpQ(scpi_t * context) {
+	uint32_t ip = 0;
+	ip = EEPROM_ReadIP(EEPROM24AA_REG_IP);
+	txlen = snprintf(txbuf, TXBUFLEN, "[mem] IP   %d.%d.%d.%d\n", (int) (ip & 0xff), (int) ((ip >> 8) & 0xff), (int) ((ip >> 16) & 0xff), (int) (ip >> 24));
+	context->interface->write(context, txbuf, txlen);
+    return SCPI_RES_OK;
+}
+
+/**
+ * @brief reads the Netmask address stored on EEPROM
+ */
+static scpi_result_t MEM_eeprom_MaskQ(scpi_t * context) {
+	uint32_t ip = 0;
+	ip = EEPROM_ReadIP(EEPROM24AA_REG_SUBNET);
+	txlen = snprintf(txbuf, TXBUFLEN, "[mem] Mask %d.%d.%d.%d\n", (int) (ip & 0xff), (int) ((ip >> 8) & 0xff), (int) ((ip >> 16) & 0xff), (int) (ip >> 24));
+	context->interface->write(context, txbuf, txlen);
+    return SCPI_RES_OK;
+}
+
+/**
+ * @brief reads the Gateway address stored on EEPROM
+ */
+static scpi_result_t MEM_eeprom_GateQ(scpi_t * context) {
+	uint32_t ip = 0;
+	ip = EEPROM_ReadIP(EEPROM24AA_REG_GATEWAY);
+	txlen = snprintf(txbuf, TXBUFLEN, "[mem] Gate %d.%d.%d.%d\n", (int) (ip & 0xff), (int) ((ip >> 8) & 0xff), (int) ((ip >> 16) & 0xff), (int) (ip >> 24));
+	context->interface->write(context, txbuf, txlen);
+    return SCPI_RES_OK;
+}
+
+/**
+ * @brief reads the IP address stored on EEPROM
+ */
+static scpi_result_t MEM_eeprom_DhcpQ(scpi_t * context) {
+	uint8_t ip = 0;
+	ip = EEPROM_ReadByte(EEPROM24AA_REG_DHCP_EN);
+	txlen = snprintf(txbuf, TXBUFLEN, "[mem] DHCP %d\n", (ip & 0xff));
+	context->interface->write(context, txbuf, txlen);
+    return SCPI_RES_OK;
+}
+/**
  * @brief builds a string of the hex representation of the PHY/MAC address
  *        and writes it to the interface of the scpi_t context
  */
@@ -635,6 +679,11 @@ const scpi_command_t scpi_commands[] = {
     {.pattern = "SYSTem:COMMunication:TCPIP:DHCP", .callback = SYST_Comm_TcpIp_Dhcp,},
     {.pattern = "SYSTem:COMMunication:TCPIP:DHCP?", .callback = SYST_Comm_TcpIp_DhcpQ,},
     {.pattern = "SYSTem:COMMunication:TCPIP:PHY?", .callback = SYST_Comm_TcpIp_PhyQ,},
+
+    {.pattern = "MEM:IP?", .callback = MEM_eeprom_IpQ,},
+    {.pattern = "MEM:MASK?", .callback = MEM_eeprom_MaskQ,},
+    {.pattern = "MEM:GATEway?", .callback = MEM_eeprom_GateQ,},
+    {.pattern = "MEM:DHCP?", .callback = MEM_eeprom_DhcpQ,},
 
     SCPI_CMD_LIST_END
 };

@@ -20,8 +20,8 @@
 
 
 /* Private function prototypes -----------------------------------------------*/
-void myCGIinit(void);
-void mySSIinit(void);
+void webCGIinit(void);
+void webSSIinit(void);
 
 uint16_t mySSIHandler(int iIndex, char *pcInsert, int iInsertLen);
 const char* settings_CGI_Handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]);
