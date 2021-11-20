@@ -118,7 +118,7 @@ void SNTP_RTC_callback(uint32_t, uint32_t);
 #define _LEN_VERSION_STR (48) // v12.345.678 (Jan 01 1970 22:29:37)\n
 #define _VERSION_MAJOR (0)
 #define _VERSION_MINOR (1)
-#define _VERSION_PATCH (0)
+#define _VERSION_PATCH (1)
 #define _LEN_PCB_STR (16)
 #define _PCB_REVISION "2.xxx.xxx.xxx"
 #define _LEN_SERIAL_N  (16)

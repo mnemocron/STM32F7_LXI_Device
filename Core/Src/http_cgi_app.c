@@ -178,7 +178,7 @@ u16_t lxiSSIHandler(
 		return strlen(str_ipv4_addr);
 	} else if (iIndex == 3) {
 		// INSTR::IP_ADDRESS
-		snprintf(str_tmp, STRLEN_CGI_SSI_TEMP, "INSTR::%s", str_ipv4_addr);
+		snprintf(str_tmp, STRLEN_CGI_SSI_TEMP, "TCPIP0::%s", str_ipv4_addr);
 		strcpy(pcInsert, str_tmp);
 		return strlen(str_tmp);
 	} else if (iIndex == 4) {

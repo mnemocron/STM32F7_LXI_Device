@@ -25,7 +25,7 @@
 #include "stm32f7xx_hal.h"
 extern I2C_HandleTypeDef hi2c1;
 
-/* DEFINES */
+/* Defines */
 #define EEPROM24AA_ADDRESS 0xA0  // as tested 0xA0 ... 0xAF
 #define EEPROM24AA_REG_IP      0x10
 #define EEPROM24AA_REG_GATEWAY 0x14

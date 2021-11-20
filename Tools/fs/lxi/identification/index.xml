@@ -7,7 +7,7 @@
     <ManufacturerDescription>Sample Device</ManufacturerDescription>
     <HomepageURL>https://github.com/eta-systems</HomepageURL>
     <DriverURL>https://github.com/eta-systems</DriverURL>
-    <UserDescription>Demo of Identification Schema</UserDescription>
+    <UserDescription>LXI Remote Demo</UserDescription>
     <IdentificationURL><!--#lxi2-->/lxi/identification</IdentificationURL>
     <Interface xsi:type="NetworkInformation" InterfaceType="LXI" IPType="IPv4" InterfaceName="eth0">
         <InstrumentAddressString><!--#lxi3-->::INSTR</InstrumentAddressString>

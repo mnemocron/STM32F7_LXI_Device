@@ -173,8 +173,8 @@ static scpi_result_t DMM_ConfigureVoltageDc(scpi_t * context) {
 // :TEST:BOOL 0
 static scpi_result_t TEST_Bool(scpi_t * context) {
     scpi_bool_t param1;
-    txlen = snprintf(txbuf, TXBUFLEN, "TEST:BOOL\r\n");
-    context->interface->write(context, txbuf, txlen);  // write directly to output
+    //txlen = snprintf(txbuf, TXBUFLEN, "TEST:BOOL\r\n");
+    //context->interface->write(context, txbuf, txlen);  // write directly to output
 
     /* read first parameter if present */
     if (!SCPI_ParamBool(context, &param1, TRUE)) {
