@@ -8,7 +8,7 @@
 /* Private includes ----------------------------------------------------------*/
 #include "main.h"
 #include "lwip/apps/httpd.h"
-#include <Stdbool.h>
+#include <stdbool.h>
 
 /* Private typedef -----------------------------------------------------------*/
 
