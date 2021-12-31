@@ -1,7 +1,8 @@
 # STM32F7_LXI_Device
 STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 
-[![Build Status](https://jenkins.kaon.ch/buildStatus/icon?job=STM32f7+TCPI+VXI+Device&build=1)](https://jenkins.kaon.ch/job/STM32f7%20TCPI%20VXI%20Device/1/)
+[![Build Status](https://jenkins.kaon.ch/job/STM32f7_LXI_Device/badge/icon)](https://jenkins.kaon.ch/job/STM32f7_LXI_Device/)
+
 ---
 
 - `stm32f746zg` (Nucleo)
