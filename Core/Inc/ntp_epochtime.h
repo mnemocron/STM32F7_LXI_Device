@@ -9,7 +9,7 @@
  * @copyright   The MIT License (MIT)
  *              Copyright (c) 2015 by Fabrice Weinberg
  *******************************************************************************/
-
+#include "main.h"
 
 /* Defines */
 #define SEVENZYYEARS 2208988800UL

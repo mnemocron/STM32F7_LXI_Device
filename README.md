@@ -56,6 +56,8 @@ STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 
 #### Todo Critical
 
+- ⚠️ [Bug] stops at: queue.c:1429 configASSERT(pxQueue->uxItemSize == 0)
+    + https://community.st.com/s/question/0D50X0000BJ1iquSQB/bug-in-cubemx-ide-lwip-freertos-on-nucleo-f429zi
 - 🔄 [Feature] make dynamic version of `/lxi/identification.xml` with appropriate SSI implementation
     + https://www.nongnu.org/lwip/2_0_x/group__httpd.html
     + (?) reverse changes in `httpd.c` because SSI can be controlled by makefsdata

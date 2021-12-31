@@ -1,7 +1,7 @@
 # Tools/temp contains 50 MB website
 /Tools/temp
 # Debug contains binaries / compiled stuff
-/Debug
+# /Debug
 # keep makefile for CI/CD
 !Debug/makefile
 

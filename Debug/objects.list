@@ -3,6 +3,7 @@
 "./Core/Src/freertos.o"
 "./Core/Src/http_cgi_app.o"
 "./Core/Src/main.o"
+"./Core/Src/ntp_epochtime.o"
 "./Core/Src/rpc_server.o"
 "./Core/Src/scpi-def.o"
 "./Core/Src/scpi_server.o"
