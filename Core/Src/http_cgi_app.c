@@ -10,7 +10,7 @@
 
 /* Includes */
 #include "http_cgi_app.h"
-#include <String.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
 
