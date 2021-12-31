@@ -1,7 +1,7 @@
 # STM32F7_LXI_Device
 STM32 based LXI Device using Ethernet, LwIP, httpd, SCPI
 
-[![Build Status](https://jenkins.kaon.ch/job/STM32f7_LXI_Device/badge/icon)](https://jenkins.kaon.ch/job/STM32f7_LXI_Device/)
+[![Build Status](https://jenkins.kaon.ch/buildStatus/icon?job=STM32f7_LXI_Device)](https://jenkins.kaon.ch/job/STM32f7_LXI_Device/)
 
 ---
 
